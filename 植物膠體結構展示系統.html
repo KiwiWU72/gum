@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧬 植物膠體結構互動展示系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Microsoft JhengHei', 'Segoe UI', system-ui, sans-serif;
+  background: #eef2f7;
+  color: #2d3748;
+  min-height: 100vh;
+}
+@keyframes bounce {
+  0%,100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  45%      { transform: translateY(-18px) scaleX(0.93) scaleY(1.07); }
+  55%      { transform: translateY(-16px) scaleX(0.95) scaleY(1.05); }
+}
+@keyframes wobble {
+  0%,100% { border-radius: 62% 38% 55% 45% / 52% 58% 42% 48%; }
+  33%     { border-radius: 45% 55% 40% 60% / 58% 42% 62% 38%; }
+  66%     { border-radius: 55% 45% 62% 38% / 40% 60% 40% 60%; }
+}
+@keyframes shimmer {
+  0%,100% { box-shadow: 0 0 18px rgba(100,200,255,.35), inset 0 0 22px rgba(255,255,255,.55); }
+  50%     { box-shadow: 0 0 30px rgba(100,200,255,.65), inset 0 0 32px rgba(255,255,255,.85); }
+}
+@keyframes drip {
+  0%,75%  { transform: scaleY(1) scaleX(1); }
+  88%     { transform: scaleY(1.12) scaleX(0.93); }
+  100%    { transform: scaleY(1) scaleX(1); }
+}
+@keyframes melt {
+  0%,100% { border-radius: 8px 8px 8px 8px; transform: scaleX(1); }
+  50%     { border-radius: 8px 8px 28px 28px; transform: scaleX(1.06); }
+}
+@keyframes arrowPulse {
+  0%,100% { transform: scaleX(1); }
+  50%     { transform: scaleX(1.04); }
+}
+@keyframes float {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%     { transform: translateX(-50%) translateY(-5px); }
+}
+@keyframes ionPulse {
+  0%,100% { r: 12; }
+  50%     { r: 14; }
+}
+button:focus { outline: none; }
+::-webkit-scrollbar { height: 4px; width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+/* ─────────────── Colour tokens ─────────────── */
+const C = {
+  kgm:      '#F5E6C8',
+  kappa:    '#7EC8E3',
+  iota:     '#C9A6E0',
+  lbg:      '#7DBD6A',
+  xanthan:  '#F4A235',
+  cmc:      '#A8C4D4',
+  laGellan: '#B8E0FF',
+  haGellan: '#FFD6E0',
+  hmPectin: '#FF7E6B',
+  lmPectin: '#FFB085',
+  arabic:   '#F5F0E8',
+  gel240:   '#D8EEFF',
+  gel160:   '#EEEFF5',
+  ca:       '#FFD700',
+  k:        '#BBBBCC',
+};
+
+/* ─────────────── SVG Molecular Diagrams ─────────────── */
+
+function SynergismDiagram() {
+  return (
+    <svg viewBox="0 0 440 210" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="210" rx="14" fill="rgba(245,250,255,.85)"/>
+
+      {/* ── Kappa helix bundles (3 vertical springs) ── */}
+      {[70,200,330].map((bx,bi) => {
+        const pts = [];
+        for (let i=0;i<=12;i++) {
+          const x = bx + Math.sin(i*0.9)*(bi===1?22:18);
+          const y = 20 + i*14;
+          pts.push(`${i===0?'M':'L'} ${x} ${y}`);
+        }
+        return (
+          <g key={bi}>
+            <path d={pts.join(' ')} stroke={C.kappa} strokeWidth="7"
+              fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d={pts.join(' ')} stroke="rgba(255,255,255,.45)" strokeWidth="3"
+              fill="none" strokeLinecap="round" strokeDasharray="3 10"/>
+            {/* Sulfate spikes */}
+            {[2,5,8,11].map(si => {
+              const sx = bx + Math.sin(si*0.9)*(bi===1?22:18);
+              const sy = 20 + si*14;
+              const nx = sx + (Math.sin(si*0.9)>0?14:-14);
+              return (
+                <g key={si}>
+                  <line x1={sx} y1={sy} x2={nx} y2={sy-8}
+                    stroke={C.kappa} strokeWidth="2" opacity=".7"/>
+                  <circle cx={nx} cy={sy-8} r="4" fill={C.kappa} opacity=".8"/>
+                </g>
+              );
+            })}
+            {/* K+ ions */}
+            <circle cx={bx} cy={185} r="9" fill={C.k} stroke="white" strokeWidth="2"/>
+            <text x={bx} y={189} fontSize="9" textAnchor="middle" fontWeight="bold" fill="#444">K⁺</text>
+            {/* Junction label */}
+            <rect x={bx-34} y={195} width="68" height="12" rx="6" fill={`${C.kappa}55`}/>
+            <text x={bx} y={205} fontSize="8" textAnchor="middle" fill="#2a6a8a" fontWeight="600">Junction Zone</text>
+          </g>
+        );
+      })}
+
+      {/* ── KGM long diagonal ropes ── */}
+      {[
+        `M 5 35 C 60 45, 120 90, 185 105 S 300 130, 360 110 S 420 90, 440 85`,
+        `M 5 65 C 70 80, 140 115, 210 125 S 330 145, 400 130 S 435 120, 440 118`,
+      ].map((d,i) => (
+        <g key={i}>
+          <path d={d} stroke={C.kgm} strokeWidth="10" fill="none"
+            strokeLinecap="round" opacity=".9"/>
+          <path d={d} stroke="rgba(255,255,255,.5)" strokeWidth="4"
+            fill="none" strokeLinecap="round" strokeDasharray="5 14"/>
+          {/* Acetyl bumps */}
+          {[80,180,280,370].map(bx2 => (
+            <g key={bx2}>
+              <circle cx={bx2} cy={i===0?92:112} r="7" fill={C.kgm}
+                stroke="rgba(0,0,0,.08)" strokeWidth="1"/>
+              <text x={bx2} y={i===0?96:116} fontSize="7" textAnchor="middle" fill="#8B7355">Ac</text>
+            </g>
+          ))}
+        </g>
+      ))}
+
+      {/* ── Crosslink glow points ── */}
+      {[[155,100,'協同交聯'],[260,118,'協同交聯'],[350,108,'協同交聯']].map(([cx,cy,lbl],i) => (
+        <g key={i}>
+          <circle cx={cx} cy={cy} r="16" fill="rgba(255,230,80,.4)"/>
+          <circle cx={cx} cy={cy} r="10" fill="rgba(255,215,0,.85)"
+            stroke="white" strokeWidth="2"/>
+          <text x={cx} y={cy-22} fontSize="9" textAnchor="middle"
+            fill="#7a5a00" fontWeight="700">{lbl}</text>
+          <line x1={cx} y1={cy-12} x2={cx} y2={cy-20}
+            stroke="#7a5a00" strokeWidth="1" opacity=".5"/>
+        </g>
+      ))}
+
+      {/* Legend pills */}
+      <rect x="6" y="6" width="112" height="17" rx="8" fill={C.kgm}/>
+      <text x="62" y="18" fontSize="10" textAnchor="middle" fontWeight="700" fill="#5a4020">
+        KGM 蒟蒻（長鏈）
+      </text>
+      <rect x="6" y="27" width="128" height="17" rx="8" fill={C.kappa}/>
+      <text x="70" y="39" fontSize="10" textAnchor="middle" fontWeight="700" fill="#0a4a6a">
+        κ-鹿角菜膠（螺旋束）
+      </text>
+
+      {/* MW scale bar */}
+      <g transform="translate(295,8)">
+        <text x="0" y="10" fontSize="9" fill="#666" fontWeight="600">分子量 MW</text>
+        <rect x="0" y="14" width="68" height="8" rx="4" fill={C.kgm}/>
+        <text x="72" y="22" fontSize="8" fill="#8B7355">~1,000 kDa</text>
+        <rect x="0" y="26" width="27" height="8" rx="4" fill={C.kappa}/>
+        <text x="31" y="34" fontSize="8" fill="#3a7ca5">~400 kDa</text>
+      </g>
+    </svg>
+  );
+}
+
+function EggBoxDiagram() {
+  return (
+    <svg viewBox="0 0 440 185" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="185" rx="14" fill="rgba(245,250,255,.85)"/>
+
+      {/* Chain 1 – zigzag top */}
+      {[0,1,2,3,4,5,6,7].map(i => {
+        const x1=25+i*50, xm=25+(i+.5)*50, x2=25+(i+1)*50;
+        return i<7 ? (
+          <g key={i}>
+            <line x1={x1} y1={60} x2={xm} y2={35} stroke={C.laGellan} strokeWidth="7" strokeLinecap="round"/>
+            <line x1={xm} y1={35} x2={x2} y2={60} stroke={C.laGellan} strokeWidth="7" strokeLinecap="round"/>
+          </g>
+        ) : null;
+      })}
+      {/* Chain 2 – mirror zigzag bottom */}
+      {[0,1,2,3,4,5,6,7].map(i => {
+        const x1=25+i*50, xm=25+(i+.5)*50, x2=25+(i+1)*50;
+        return i<7 ? (
+          <g key={i}>
+            <line x1={x1} y1={125} x2={xm} y2={150} stroke={C.laGellan} strokeWidth="7" strokeLinecap="round"/>
+            <line x1={xm} y1={150} x2={x2} y2={125} stroke={C.laGellan} strokeWidth="7" strokeLinecap="round"/>
+          </g>
+        ) : null;
+      })}
+
+      {/* Ca2+ spheres in pockets */}
+      {[0,1,2,3,4,5,6].map(i => {
+        const cx=50+i*50;
+        return (
+          <g key={i}>
+            <circle cx={cx} cy={92} r="13" fill={C.ca} stroke="white" strokeWidth="2.5">
+              <animate attributeName="r" values="13;15;13" dur="2s"
+                repeatCount="indefinite" begin={`${i*.28}s`}/>
+            </circle>
+            <text x={cx} y={97} fontSize="9" textAnchor="middle"
+              fontWeight="800" fill="#5a3800">Ca²⁺</text>
+          </g>
+        );
+      })}
+
+      {/* Annotation lines */}
+      <line x1={50} y1={60} x2={50} y2={79} stroke="rgba(0,0,0,.2)" strokeWidth="1.5" strokeDasharray="3,3"/>
+      <line x1={50} y1={125} x2={50} y2={105} stroke="rgba(0,0,0,.2)" strokeWidth="1.5" strokeDasharray="3,3"/>
+
+      {/* Labels */}
+      <text x="4" y="53" fontSize="9" fill="#3a6a9a" fontWeight="700">LA Gellan 鏈 1</text>
+      <text x="4" y="140" fontSize="9" fill="#3a6a9a" fontWeight="700">LA Gellan 鏈 2</text>
+      <rect x="135" y="165" width="165" height="16" rx="8" fill="rgba(255,215,0,.2)" stroke={C.ca} strokeWidth="1.2"/>
+      <text x="217" y="177" fontSize="9" textAnchor="middle" fill="#7a5000" fontWeight="700">
+        蛋盒結構 Egg-Box Model ★
+      </text>
+    </svg>
+  );
+}
+
+function HAGellanDiagram() {
+  const rows = [
+    { y:55, x0:20, col:'#FFB8CC' },
+    { y:110, x0:50, col:C.haGellan },
+    { y:155, x0:15, col:'#FFCCE0' },
+  ];
+  return (
+    <svg viewBox="0 0 440 195" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="195" rx="14" fill="rgba(255,248,252,.85)"/>
+      {rows.map((r,ri) => {
+        const d=`M ${r.x0} ${r.y} Q ${r.x0+90} ${r.y-35} ${r.x0+180} ${r.y} Q ${r.x0+270} ${r.y+35} ${r.x0+360} ${r.y}`;
+        return (
+          <g key={ri}>
+            <path d={d} stroke={r.col} strokeWidth="7" fill="none" strokeLinecap="round"/>
+            <path d={d} stroke="rgba(255,255,255,.5)" strokeWidth="3" fill="none"
+              strokeLinecap="round" strokeDasharray="4 12"/>
+            {/* Bulky acyl side groups */}
+            {[0.2,.5,.8].map((t,j) => {
+              const bx=r.x0+t*360;
+              const by=r.y + (t===.5 ? (ri%2===0?35:-35) : (ri%2===0?-30:30)) * .5;
+              return (
+                <g key={j}>
+                  <line x1={bx} y1={by} x2={bx} y2={by-(j===1?-22:22)}
+                    stroke={r.col} strokeWidth="2.5"/>
+                  <circle cx={bx} cy={by-(j===1?-28:28)} r="13"
+                    fill={r.col} stroke="white" strokeWidth="2" opacity=".9"/>
+                  <text x={bx} y={by-(j===1?-24:24)} fontSize="8"
+                    textAnchor="middle" fill="#8a4060">Acyl</text>
+                  {/* Repulsion arrow to neighbour */}
+                  {ri < 2 && j===1 && (
+                    <text x={bx+22} y={by-(j===1?-24:24)}
+                      fontSize="14" fill="#e060a0">↔</text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+      <rect x="6" y="176" width="310" height="14" rx="7" fill="rgba(255,182,205,.3)"/>
+      <text x="161" y="187" fontSize="9" textAnchor="middle" fill="#a04060" fontWeight="700">
+        HA Gellan — 醯基側鏈阻礙螺旋緊密聚集 → 柔軟凝膠
+      </text>
+    </svg>
+  );
+}
+
+function HMPectinDiagram() {
+  return (
+    <svg viewBox="0 0 440 215" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="215" rx="14" fill="rgba(255,248,248,.85)"/>
+      {/* Two pectin chains at y=65 and y=125 — with room above and below */}
+      {[65,125].map((baseY,ri) => (
+        <g key={ri}>
+          <line x1={20} y1={baseY} x2={420} y2={baseY}
+            stroke={C.hmPectin} strokeWidth="6" strokeLinecap="round"/>
+          {[0,1,2,3,4,5,6,7].map(i => {
+            const mx=42+i*50;
+            return (
+              <g key={i}>
+                <circle cx={mx} cy={baseY-17} r="11"
+                  fill="#FF5A45" stroke="white" strokeWidth="1.5"/>
+                <text x={mx} y={baseY-12} fontSize="7"
+                  textAnchor="middle" fill="white" fontWeight="700">OCH₃</text>
+                <line x1={mx} y1={baseY} x2={mx} y2={baseY-6}
+                  stroke={C.hmPectin} strokeWidth="2.5"/>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+      {/* Hydrophobic zone highlight — positioned between the two chains */}
+      <rect x="178" y="52" width="95" height="87" rx="10"
+        fill="rgba(255,200,150,.18)" stroke="rgba(255,140,80,.6)"
+        strokeWidth="2" strokeDasharray="6,3"/>
+      {/* Label to the right of the box, no overlap */}
+      <line x1="273" y1="88" x2="300" y2="88" stroke="rgba(255,140,80,.7)" strokeWidth="1.5"/>
+      <text x="304" y="84" fontSize="9" fill="#c04020" fontWeight="700">疏水結合區</text>
+      <text x="304" y="97" fontSize="8" fill="#c04020">Hydrophobic</text>
+      <text x="304" y="108" fontSize="8" fill="#c04020">Zone</text>
+      {/* Condition badges — moved to bottom strip, no overlap */}
+      <rect x="6" y="156" width="130" height="22" rx="11"
+        fill="rgba(255,80,60,.1)" stroke="#FF5A45" strokeWidth="1.5"/>
+      <text x="71" y="171" fontSize="9" textAnchor="middle"
+        fill="#c03010" fontWeight="700">⚠️ 需 pH 3.0–3.5</text>
+      <rect x="145" y="156" width="135" height="22" rx="11"
+        fill="rgba(255,200,50,.12)" stroke="#FFB020" strokeWidth="1.2"/>
+      <text x="212" y="171" fontSize="9" textAnchor="middle"
+        fill="#8a5000" fontWeight="600">🍬 糖度 &gt; 55%</text>
+      <rect x="290" y="156" width="145" height="22" rx="11"
+        fill="rgba(200,230,200,.2)" stroke="#60a060" strokeWidth="1.2"/>
+      <text x="362" y="171" fontSize="9" textAnchor="middle"
+        fill="#2a6020" fontWeight="600">✓ 耐熱 &gt; 80°C</text>
+      {/* Title */}
+      <text x="8" y="204" fontSize="9" fill="#c04020" fontWeight="700">
+        HM Pectin — DE &gt; 50% | 疏水 + 氫鍵聚集
+      </text>
+    </svg>
+  );
+}
+
+function IotaLBGDiagram() {
+  return (
+    <svg viewBox="0 0 440 200" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="200" rx="14" fill="rgba(252,248,255,.85)"/>
+      {/* Iota helix – wider amplitude than kappa */}
+      <path d="M 20 80 Q 70 42, 120 80 Q 170 118, 220 80 Q 270 42, 320 80 Q 370 118, 420 80"
+        stroke={C.iota} strokeWidth="7" fill="none" strokeLinecap="round"/>
+      <path d="M 20 80 Q 70 42, 120 80 Q 170 118, 220 80 Q 270 42, 320 80 Q 370 118, 420 80"
+        stroke="rgba(255,255,255,.45)" strokeWidth="3" fill="none"
+        strokeLinecap="round" strokeDasharray="4 10"/>
+      {/* 2 sulfate groups per repeat (more than kappa) */}
+      {[65,90,165,190,265,290,365,390].map((x,i) => (
+        <circle key={i} cx={x} cy={i%2===0?46:114} r="5"
+          fill={C.iota} opacity=".85"/>
+      ))}
+      <text x="22" y="70" fontSize="9" fill="#7040b0" fontWeight="700">ι (2× SO₃⁻)</text>
+
+      {/* LBG backbone — hairy zones (with branches) as straight line,
+           smooth zones (no branches) as short ordered zigzag helices */}
+      {/* Segment 1: smooth zone x=20–52 (short helix) */}
+      <path d="M 20 148 Q 28 140, 36 148 Q 44 156, 52 148"
+        stroke={C.lbg} strokeWidth="5" fill="none" strokeLinecap="round"/>
+      {/* Segment 2: hairy zone x=52–130 (straight) */}
+      <line x1={52} y1={148} x2={130} y2={148}
+        stroke={C.lbg} strokeWidth="5" strokeLinecap="round"/>
+      {/* Segment 3: smooth zone x=130–175 (helix) */}
+      <path d="M 130 148 Q 140 138, 150 148 Q 160 158, 170 148 Q 174 143, 175 148"
+        stroke={C.lbg} strokeWidth="5" fill="none" strokeLinecap="round"/>
+      {/* Segment 4: hairy zone x=175–250 (straight) */}
+      <line x1={175} y1={148} x2={250} y2={148}
+        stroke={C.lbg} strokeWidth="5" strokeLinecap="round"/>
+      {/* Segment 5: smooth zone x=250–305 (helix — labelled bald region) */}
+      <path d="M 250 148 Q 260 137, 270 148 Q 280 159, 290 148 Q 300 137, 305 148"
+        stroke={C.lbg} strokeWidth="6" fill="none" strokeLinecap="round"
+        stroke-opacity="1"/>
+      {/* Segment 6: hairy zone x=305–375 (straight) */}
+      <line x1={305} y1={148} x2={375} y2={148}
+        stroke={C.lbg} strokeWidth="5" strokeLinecap="round"/>
+      {/* Segment 7: smooth zone x=375–420 (helix) */}
+      <path d="M 375 148 Q 385 138, 395 148 Q 405 158, 415 148 Q 418 144, 420 148"
+        stroke={C.lbg} strokeWidth="5" fill="none" strokeLinecap="round"/>
+
+      {/* LBG galactose side chains — clustered at hairy zones */}
+      {[62,85,108,190,215,240,318,342,365].map((x,i) => (
+        <g key={i}>
+          <line x1={x} y1={148} x2={x} y2={128}
+            stroke={C.lbg} strokeWidth="3"/>
+          <circle cx={x} cy={122} r="7"
+            fill={C.lbg} stroke="white" strokeWidth="1.5"/>
+        </g>
+      ))}
+
+      {/* Smooth zone highlight + label (centre smooth zone) */}
+      <rect x="245" y="130" width="65" height="32" rx="6"
+        fill="rgba(125,189,106,.15)" stroke={C.lbg}
+        strokeWidth="1.5" strokeDasharray="4,2"/>
+      <text x="278" y="175" fontSize="8" textAnchor="middle"
+        fill="#3a7020" fontWeight="600">光禿區 / 接合帶</text>
+      {/* Short helix label */}
+      <text x="36" y="168" fontSize="7" textAnchor="middle"
+        fill="#3a7020" fontWeight="600">有序螺旋</text>
+      <text x="22" y="190" fontSize="9" fill="#3a8020" fontWeight="700">
+        LBG — 光禿甘露糖區（有序螺旋）+ 毛茸半乳糖區
+      </text>
+
+      {/* Ca2+ bridges between chains */}
+      {[[145,114],[315,114]].map(([x,y],i) => (
+        <g key={i}>
+          <line x1={x} y1={80} x2={x} y2={y+24}
+            stroke={C.ca} strokeWidth="2" strokeDasharray="3,3"/>
+          <circle cx={x} cy={y+8} r="11"
+            fill={C.ca} stroke="white" strokeWidth="2"/>
+          <text x={x} y={y+12} fontSize="8" textAnchor="middle"
+            fontWeight="800" fill="#5a3800">Ca²⁺</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function CMCDiagram() {
+  const chains = [
+    [30,55,75,15],[105,95,65,-30],[185,38,80,25],
+    [265,125,58,-15],[345,65,72,40],[62,145,68,10],
+    [200,168,60,-20],[318,38,70,30],[400,130,60,20],
+  ];
+  const arabicBlobs = [[148,92],[280,108],[210,52],[355,150]];
+  return (
+    <svg viewBox="0 0 440 195" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="195" rx="14" fill="rgba(248,250,252,.85)"/>
+      {/* Short CMC chains */}
+      {chains.map(([x,y,len,rot],i) => (
+        <g key={i} transform={`rotate(${rot}, ${x+len/2}, ${y})`}>
+          <path d={`M ${x} ${y} C ${x+len*.3} ${y-14}, ${x+len*.7} ${y+14}, ${x+len} ${y}`}
+            stroke={C.cmc} strokeWidth="5" fill="none" strokeLinecap="round"/>
+          {[.28,.68].map((t,j) => (
+            <circle key={j} cx={x+t*len} cy={y+(j===0?-10:10)} r="5"
+              fill={C.cmc} opacity=".75"/>
+          ))}
+        </g>
+      ))}
+      {/* Arabic Gum globular particles */}
+      {arabicBlobs.map(([x,y],i) => (
+        <g key={i}>
+          <circle cx={x} cy={y} r="24" fill={C.arabic}
+            stroke="rgba(0,0,0,.08)" strokeWidth="1"/>
+          {[0,45,90,135,180,225,270,315].map(ang => {
+            const r2=ang*Math.PI/180;
+            return (
+              <circle key={ang}
+                cx={x+Math.cos(r2)*20} cy={y+Math.sin(r2)*20}
+                r="5" fill={C.arabic} opacity=".8"/>
+            );
+          })}
+          <text x={x} y={y+4} fontSize="8"
+            textAnchor="middle" fill="#7a6850">Gum</text>
+        </g>
+      ))}
+      {/* Legend */}
+      <rect x="4" y="176" width="340" height="14" rx="7"
+        fill="rgba(168,196,212,.2)"/>
+      <text x="174" y="187" fontSize="9" textAnchor="middle"
+        fill="#406080" fontWeight="700">
+        短鏈 CMC + 球形阿拉伯膠 — 無凝膠網絡，增稠流體
+      </text>
+    </svg>
+  );
+}
+
+function GelatinDiagram({ bloom }) {
+  const count = bloom===240 ? 6 : 4;
+  const step  = bloom===240 ? 62 : 90;
+  const strands = ['#A8C8E8','#E8A8C8','#A8E8B8'];
+  return (
+    <svg viewBox="0 0 440 200" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="200" rx="14" fill="rgba(248,252,255,.85)"/>
+      {/* Triple helices */}
+      {Array.from({length:count}).map((_,idx) => {
+        const bx = 30 + idx*step;
+        return (
+          <g key={idx}>
+            {strands.map((sc,si) => {
+              const off = (si-1)*7;
+              return (
+                <path key={si}
+                  d={`M ${bx+off} 22 Q ${bx+off+10} 80, ${bx+off} 138 Q ${bx+off-10} 80, ${bx+off} 22`}
+                  stroke={sc} strokeWidth="5" fill="none"
+                  strokeLinecap="round" opacity=".9"/>
+              );
+            })}
+            {/* Junction marks */}
+            {[50,90,130].map(jy => (
+              <circle key={jy} cx={bx} cy={jy} r="4"
+                fill="white" stroke={strands[0]} strokeWidth="2"/>
+            ))}
+          </g>
+        );
+      })}
+      {/* Melting pool for 160B */}
+      {bloom===160 && (
+        <path d="M 20 170 Q 220 182, 420 170"
+          stroke="rgba(180,200,220,.5)" strokeWidth="9"
+          fill="none" strokeLinecap="round">
+          <animate attributeName="d"
+            values="M 20 170 Q 220 182, 420 170;M 20 173 Q 220 188, 420 173;M 20 170 Q 220 182, 420 170"
+            dur="3s" repeatCount="indefinite"/>
+        </path>
+      )}
+      {/* Caption */}
+      <rect x="4" y="178" width={bloom===240?290:260} height="14" rx="7"
+        fill="rgba(200,220,240,.3)"/>
+      <text x={bloom===240?148:132} y={189} fontSize="9" textAnchor="middle"
+        fill="#3a5070" fontWeight="700">
+        {bloom}B — {bloom===240?'高密度三重螺旋，強回彈力':'低密度三重螺旋，柔軟易溶'}
+      </text>
+      {/* Heat warning */}
+      <rect x="295" y="5" width="140" height="22" rx="11"
+        fill="rgba(255,60,60,.1)" stroke="#FF4040" strokeWidth="1.5"/>
+      <text x="365" y="20" fontSize="9" textAnchor="middle"
+        fill="#c03030" fontWeight="700">⚠️ {bloom===240?'35':'32'}°C 以上融化</text>
+    </svg>
+  );
+}
+
+function TripleSynergyDiagram() {
+  return (
+    <svg viewBox="0 0 440 230" style={{width:'100%',maxWidth:440,height:'auto'}}>
+      <rect width="440" height="230" rx="14" fill="rgba(245,250,248,.88)"/>
+
+      {/* ── Layer 1: Kappa helix bundles (blue, 3 vertical) ── */}
+      {[75,210,355].map((bx,bi) => {
+        const pts=[];
+        for(let i=0;i<=10;i++){
+          const x=bx+Math.sin(i*1.0)*(bi===1?20:16);
+          const y=18+i*15;
+          pts.push(`${i===0?'M':'L'} ${x} ${y}`);
+        }
+        return (
+          <g key={bi}>
+            <path d={pts.join(' ')} stroke={C.kappa} strokeWidth="6"
+              fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d={pts.join(' ')} stroke="rgba(255,255,255,.4)" strokeWidth="3"
+              fill="none" strokeLinecap="round" strokeDasharray="3 9"/>
+            {/* Sulfate spikes */}
+            {[2,5,8].map(si=>{
+              const sx=bx+Math.sin(si*1.0)*(bi===1?20:16);
+              const sy=18+si*15;
+              const nx=sx+(Math.sin(si*1.0)>0?12:-12);
+              return(
+                <g key={si}>
+                  <line x1={sx} y1={sy} x2={nx} y2={sy-7}
+                    stroke={C.kappa} strokeWidth="1.8" opacity=".7"/>
+                  <circle cx={nx} cy={sy-7} r="3.5" fill={C.kappa} opacity=".8"/>
+                </g>
+              );
+            })}
+            {/* K+ ion */}
+            <circle cx={bx} cy={175} r="9" fill={C.k} stroke="white" strokeWidth="2"/>
+            <text x={bx} y={179} fontSize="8" textAnchor="middle" fontWeight="700" fill="#444">K⁺</text>
+          </g>
+        );
+      })}
+
+      {/* ── Layer 2: KGM long diagonal rope (cream) ── */}
+      {['M 5 25 C 70 38, 150 75, 220 88 S 360 108, 440 98',
+        'M 5 50 C 80 65, 165 95, 240 105 S 370 120, 440 115'].map((d,i)=>(
+        <g key={i}>
+          <path d={d} stroke={C.kgm} strokeWidth="9" fill="none" strokeLinecap="round" opacity=".92"/>
+          <path d={d} stroke="rgba(255,255,255,.45)" strokeWidth="4" fill="none"
+            strokeLinecap="round" strokeDasharray="5 14"/>
+          {[80,190,320].map(bx2=>(
+            <g key={bx2}>
+              <circle cx={bx2} cy={i===0?72:98} r="6" fill={C.kgm}
+                stroke="rgba(0,0,0,.08)" strokeWidth="1"/>
+            </g>
+          ))}
+        </g>
+      ))}
+
+      {/* ── Layer 3: LBG backbone (green) with helix segments ── */}
+      {/* Smooth helix zones */}
+      {['M 20 185 Q 30 175, 40 185 Q 50 195, 60 185',
+        'M 135 185 Q 148 173, 161 185 Q 174 197, 182 185',
+        'M 258 185 Q 272 172, 286 185 Q 300 198, 308 185',
+        'M 382 185 Q 393 174, 404 185 Q 415 196, 420 185',
+       ].map((d,i)=>(
+        <path key={i} d={d} stroke={C.lbg} strokeWidth="5"
+          fill="none" strokeLinecap="round"/>
+      ))}
+      {/* Straight hairy zones */}
+      {[[60,135],[182,258],[308,382]].map(([x1,x2],i)=>(
+        <line key={i} x1={x1} y1={185} x2={x2} y2={185}
+          stroke={C.lbg} strokeWidth="5" strokeLinecap="round"/>
+      ))}
+      {/* Galactose branches (hairy zones) */}
+      {[72,95,115,198,220,243,322,345,368].map((x,i)=>(
+        <g key={i}>
+          <line x1={x} y1={185} x2={x} y2={167} stroke={C.lbg} strokeWidth="2.5"/>
+          <circle cx={x} cy={161} r="6" fill={C.lbg} stroke="white" strokeWidth="1.5"/>
+        </g>
+      ))}
+
+      {/* ── Triple crosslink junction points ── */}
+      {[[155,100,'三重交聯'],[290,112,'三重交聯']].map(([cx,cy,lbl],i)=>(
+        <g key={i}>
+          <circle cx={cx} cy={cy} r="20" fill="rgba(255,220,50,.25)"/>
+          <circle cx={cx} cy={cy} r="13" fill="rgba(255,200,0,.8)"
+            stroke="white" strokeWidth="2.5">
+            <animate attributeName="r" values="13;16;13"
+              dur="2.4s" repeatCount="indefinite" begin={`${i*.6}s`}/>
+          </circle>
+          <text x={cx} y={cy-26} fontSize="9" textAnchor="middle"
+            fill="#7a5000" fontWeight="800">{lbl}</text>
+          <text x={cx} y={cy-14} fontSize="7" textAnchor="middle"
+            fill="#7a5000">Triple Crosslink</text>
+          {/* Lines to each polymer layer */}
+          <line x1={cx} y1={cy-13} x2={cx} y2={cy-23}
+            stroke="#7a5000" strokeWidth="1" opacity=".5"/>
+        </g>
+      ))}
+
+      {/* Legend */}
+      <rect x="4" y="5" width="100" height="15" rx="7" fill={C.kgm}/>
+      <text x="54" y="16" fontSize="9" textAnchor="middle" fontWeight="700" fill="#5a4020">KGM 蒟蒻</text>
+      <rect x="110" y="5" width="110" height="15" rx="7" fill={C.kappa}/>
+      <text x="165" y="16" fontSize="9" textAnchor="middle" fontWeight="700" fill="#0a4a6a">κ-鹿角菜膠</text>
+      <rect x="226" y="5" width="105" height="15" rx="7" fill={C.lbg}/>
+      <text x="278" y="16" fontSize="9" textAnchor="middle" fontWeight="700" fill="#1a4a10">LBG 刺槐豆膠</text>
+      <text x="8" y="218" fontSize="9" fill="#3a5030" fontWeight="700">
+        三重協同網絡 — KGM 彈性 + Kappa 剛性 + LBG 橋接 = 超強口感
+      </text>
+    </svg>
+  );
+}
+
+/* ─────────────── Macro Texture Shapes ─────────────── */
+function MacroShape({ shape, color, label, warning }) {
+  const wrap = { width:130, height:130, display:'flex',
+    alignItems:'center', justifyContent:'center', margin:'0 auto' };
+
+  const el = {
+    sphere: (
+      <div style={{
+        width:108, height:108, borderRadius:'50%',
+        background:`radial-gradient(circle at 35% 32%, white, ${color}dd, ${color})`,
+        boxShadow:`0 10px 32px ${color}99, inset 0 -10px 20px rgba(0,0,0,.1)`,
+        animation:'bounce 2s ease-in-out infinite',
+        position:'relative',
+      }}>
+        <div style={{
+          position:'absolute', bottom:-12, left:'50%',
+          transform:'translateX(-50%)',
+          width:76, height:10, borderRadius:'50%',
+          background:'rgba(0,0,0,.07)',
+        }}/>
+      </div>
+    ),
+    blob: (
+      <div style={{
+        width:108, height:98,
+        borderRadius:'62% 38% 55% 45% / 52% 58% 42% 48%',
+        background:`radial-gradient(circle at 38% 32%, white, ${color}ee, ${color})`,
+        boxShadow:`0 6px 22px ${color}77`,
+        animation:'wobble 3.5s ease-in-out infinite',
+      }}/>
+    ),
+    'soft-blob': (
+      <div style={{
+        width:100, height:92,
+        borderRadius:'55% 45% 48% 52% / 52% 60% 40% 48%',
+        background:`radial-gradient(circle at 40% 35%, white, ${color}ee, ${color})`,
+        boxShadow:`0 5px 18px ${color}66`,
+        animation:'wobble 4.5s ease-in-out infinite',
+      }}/>
+    ),
+    crystal: (
+      <div style={{
+        width:88, height:88,
+        background:`linear-gradient(135deg, rgba(255,255,255,.92) 0%, ${color}bb 55%, rgba(180,225,255,.75) 100%)`,
+        boxShadow:`0 0 24px ${color}77, inset 0 0 28px rgba(255,255,255,.75)`,
+        animation:'shimmer 2.8s ease-in-out infinite',
+        clipPath:'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
+      }}/>
+    ),
+    jam: (
+      <div style={{
+        width:118, height:72,
+        borderRadius:'58% 58% 50% 50% / 60% 60% 40% 40%',
+        background:`radial-gradient(ellipse at 38% 28%, rgba(255,200,180,.9), ${color}cc)`,
+        boxShadow:`0 8px 18px ${color}55`,
+        animation:'drip 3.2s ease-in-out infinite',
+      }}/>
+    ),
+    fluid: (
+      <div style={{
+        width:62, height:108,
+        borderRadius:'50% 50% 38% 38% / 40% 40% 55% 55%',
+        background:`linear-gradient(180deg, ${color}aa, ${color})`,
+        boxShadow:`0 5px 16px ${color}55`,
+        position:'relative',
+      }}>
+        <div style={{
+          position:'absolute', bottom:-22, left:'50%',
+          transform:'translateX(-50%)',
+          width:9, height:28,
+          borderRadius:'0 0 50% 50%',
+          background:color,
+          animation:'drip 2.2s ease-in-out infinite',
+        }}/>
+      </div>
+    ),
+    'crystal-cube': (
+      <div style={{
+        width:98, height:98,
+        background:`linear-gradient(135deg, rgba(255,255,255,.96), ${color}aa, rgba(180,220,255,.8))`,
+        boxShadow:`0 0 32px ${color}99, inset 0 0 22px rgba(255,255,255,.85)`,
+        animation:'shimmer 3.2s ease-in-out infinite',
+        borderRadius:10,
+        border:`2px solid rgba(255,255,255,.8)`,
+      }}/>
+    ),
+    'melting-cube': (
+      <div style={{
+        width:98, height:92,
+        background:`linear-gradient(160deg, rgba(238,238,248,.92), ${color}bb)`,
+        boxShadow:`0 6px 22px rgba(150,150,180,.3)`,
+        animation:'melt 3.5s ease-in-out infinite',
+        borderRadius:'10px 10px 28px 28px',
+        border:`2px solid rgba(200,200,220,.5)`,
+      }}/>
+    ),
+  };
+
+  return (
+    <div style={{textAlign:'center'}}>
+      <div style={wrap}>{el[shape] || el.blob}</div>
+      <div style={{
+        marginTop:10, padding:'5px 14px',
+        background:'rgba(40,45,65,.88)',
+        borderRadius:20, display:'inline-block',
+        backdropFilter:'blur(4px)',
+      }}>
+        <div style={{fontSize:13,fontWeight:'700',color:'white',letterSpacing:.4}}>
+          {label}
+        </div>
+      </div>
+      {warning && (
+        <div style={{
+          marginTop:5, fontSize:11, color:'#e53e3e',
+          fontWeight:'700',
+          background:'rgba(255,200,200,.3)',
+          padding:'2px 10px', borderRadius:10,
+        }}>⚠️ {warning}</div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────── Arrow ─────────────── */
+function Arrow({ label, labelEn, from, to }) {
+  return (
+    <div style={{
+      flex:'0 0 110px',
+      display:'flex', flexDirection:'column',
+      alignItems:'center', justifyContent:'center',
+      padding:'0 6px',
+    }}>
+      <div style={{
+        width:'100%',
+        background:`linear-gradient(90deg, ${from}cc, ${to}cc)`,
+        borderRadius:28,
+        padding:'10px 10px',
+        textAlign:'center',
+        position:'relative',
+        boxShadow:'0 3px 14px rgba(0,0,0,.1)',
+        animation:'arrowPulse 2.2s ease-in-out infinite',
+      }}>
+        <div style={{fontSize:12,fontWeight:'700',color:'#2d3748'}}>{label}</div>
+        <div style={{fontSize:10,color:'rgba(0,0,0,.5)',marginTop:2}}>{labelEn}</div>
+        {/* Arrowhead */}
+        <div style={{
+          position:'absolute', right:-16, top:'50%',
+          transform:'translateY(-50%)',
+          width:0, height:0,
+          borderTop:'13px solid transparent',
+          borderBottom:'13px solid transparent',
+          borderLeft:`17px solid ${to}dd`,
+        }}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── System Card ─────────────── */
+const DIAGRAMS = {
+  'kgm-kappa':       <SynergismDiagram/>,
+  'ha-gellan':       <HAGellanDiagram/>,
+  'la-gellan-ca':    <EggBoxDiagram/>,
+  'hm-pectin':       <HMPectinDiagram/>,
+  'iota-lbg':        <IotaLBGDiagram/>,
+  'cmc-arabic':      <CMCDiagram/>,
+  'gelatin-240':     <GelatinDiagram bloom={240}/>,
+  'gelatin-160':     <GelatinDiagram bloom={160}/>,
+  'kgm-kappa-lbg':   <TripleSynergyDiagram/>,
+};
+
+function SystemCard({ system }) {
+  const [open, setOpen] = useState(false);
+  const from = system.polymers[0]?.color || '#ddd';
+  const to   = system.macro.color;
+  return (
+    <div style={{
+      background:'white', borderRadius:16,
+      boxShadow:'0 4px 22px rgba(0,0,0,.07)',
+      overflow:'hidden', marginBottom:18,
+      border:'1px solid rgba(0,0,0,.04)',
+    }}>
+      {/* Header */}
+      <div
+        style={{
+          padding:'13px 20px',
+          background:`linear-gradient(135deg, ${from}28, ${to}18)`,
+          borderBottom:'1px solid rgba(0,0,0,.05)',
+          cursor:'pointer',
+          display:'flex', justifyContent:'space-between', alignItems:'center',
+        }}
+        onClick={() => setOpen(o=>!o)}
+      >
+        <div>
+          <div style={{fontSize:15,fontWeight:'700',color:'#2d3748'}}>{system.title}</div>
+          <div style={{fontSize:11,color:'#718096',marginTop:2}}>{system.subtitle}</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {system.ions.map(ion => (
+            <div key={ion.name} title={ion.effect} style={{
+              width:30, height:30, borderRadius:'50%',
+              background:ion.color,
+              border:'2px solid white',
+              boxShadow:'0 2px 6px rgba(0,0,0,.15)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              fontSize:10, fontWeight:'700',
+              color: ion.name==='Ca²⁺'?'#5a3800':'#444',
+            }}>{ion.name}</div>
+          ))}
+          <div style={{
+            width:30, height:30, borderRadius:'50%',
+            background:'rgba(0,0,0,.06)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:17, color:'#718096',
+            transition:'transform .25s',
+            transform: open?'rotate(180deg)':'none',
+          }}>▾</div>
+        </div>
+      </div>
+
+      {/* Diagram row */}
+      <div style={{
+        display:'flex', alignItems:'center',
+        padding:'18px 14px', gap:6, flexWrap:'wrap',
+      }}>
+        <div style={{flex:'1 1 300px',minWidth:270}}>
+          <div style={{
+            fontSize:10,fontWeight:'600',color:'#a0aec0',
+            textTransform:'uppercase',letterSpacing:.8,marginBottom:7,
+          }}>分子結構 Molecular Structure</div>
+          {DIAGRAMS[system.id] || null}
+        </div>
+        <Arrow label={system.arrow} labelEn={system.arrowEn} from={from} to={to}/>
+        <div style={{flex:'0 0 160px',display:'flex',flexDirection:'column',alignItems:'center'}}>
+          <div style={{
+            fontSize:10,fontWeight:'600',color:'#a0aec0',
+            textTransform:'uppercase',letterSpacing:.8,marginBottom:7,
+          }}>巨觀口感 Macro Result</div>
+          <MacroShape
+            shape={system.macro.shape}
+            color={system.macro.color}
+            label={system.macro.label}
+            warning={system.macro.warning}
+          />
+        </div>
+      </div>
+
+      {/* Expandable detail panel */}
+      {open && (
+        <div style={{
+          borderTop:'1px solid rgba(0,0,0,.05)',
+          padding:'16px 20px',
+          background:'rgba(248,250,252,.9)',
+          display:'grid',
+          gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',
+          gap:16,
+        }}>
+          {[
+            {
+              icon:'⚗️', label:'作用機制',
+              body: <><div style={{fontSize:12,color:'#4a5568',lineHeight:1.65}}>{system.interactionZh}</div>
+                <div style={{fontSize:10,color:'#a0aec0',marginTop:4,fontStyle:'italic'}}>{system.interaction}</div></>
+            },
+            {
+              icon:'📋', label:'使用條件',
+              body: <div style={{fontSize:12,color:'#4a5568',lineHeight:1.8}}>{system.conditions}</div>
+            },
+            {
+              icon:'📚', label:'關鍵文獻',
+              body: system.literature.map((lit,i)=>(
+                <div key={i} style={{
+                  fontSize:11,color:'#4a5568',marginBottom:4,lineHeight:1.5,
+                  padding:'4px 8px',background:'rgba(255,255,255,.9)',
+                  borderRadius:6,borderLeft:'3px solid '+C.kappa,
+                }}>{lit}</div>
+              ))
+            },
+            {
+              icon:'🎯', label:'口感描述',
+              body:<>
+                <div style={{fontSize:12,color:'#4a5568',lineHeight:1.6,marginBottom:8}}>
+                  {system.macro.description}
+                </div>
+                {system.polymers.map(p=>(
+                  <div key={p.name} style={{display:'flex',alignItems:'center',gap:6,marginTop:4}}>
+                    <div style={{
+                      width:12,height:12,borderRadius:3,
+                      background:p.color,border:'1px solid rgba(0,0,0,.1)',flexShrink:0,
+                    }}/>
+                    <span style={{fontSize:11,color:'#718096'}}>
+                      {p.name} ({p.mw})
+                    </span>
+                  </div>
+                ))}
+              </>
+            },
+          ].map(sec=>(
+            <div key={sec.label}>
+              <div style={{
+                fontSize:11,fontWeight:'700',color:'#4a5568',
+                textTransform:'uppercase',marginBottom:8,letterSpacing:.5,
+              }}>{sec.icon} {sec.label}</div>
+              {sec.body}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────── Texture Spectrum Bar ─────────────── */
+// Extra standalone single-polymer reference points shown on spectrum
+const STANDALONE_SPECTRUM = [
+  { id:'kappa-alone',  title:'κ-鹿角菜膠（單獨）', macro:{ color:C.kappa,  spectrumPosition:83, label:'堅硬脆性' }, shape:'diamond' },
+  { id:'lbg-alone',    title:'LBG（單獨）',         macro:{ color:C.lbg,    spectrumPosition:9,  label:'弱增稠' },   shape:'diamond' },
+  { id:'arabic-alone', title:'阿拉伯膠（單獨）',    macro:{ color:'#D4C9A8', spectrumPosition:3,  label:'入口即化' }, shape:'diamond' },
+];
+
+function TextureSpectrum({ systems }) {
+  const allItems = [...systems, ...STANDALONE_SPECTRUM];
+  return (
+    <div style={{
+      background:'white', borderRadius:16,
+      padding:'20px 28px',
+      boxShadow:'0 4px 22px rgba(0,0,0,.07)',
+      marginTop:4,
+    }}>
+      <div style={{fontSize:13,fontWeight:'700',color:'#4a5568',
+        marginBottom:6,textAlign:'center'}}>
+        口感質地光譜 Texture Spectrum
+      </div>
+      <div style={{fontSize:10,color:'#a0aec0',textAlign:'center',marginBottom:14}}>
+        ◆ = 單一膠體參考點 &nbsp;● = 混合配方結果
+      </div>
+      <div style={{position:'relative',height:52,marginBottom:36}}>
+        {/* Gradient bar */}
+        <div style={{
+          position:'absolute',top:14,left:0,right:0,height:14,
+          borderRadius:7,
+          background:'linear-gradient(90deg,#A8C4D4,#C9A6E0,#FFD6E0,#F5E6C8,#7EC8E3,#7DBD6A,#B8E0FF)',
+          boxShadow:'0 2px 10px rgba(0,0,0,.1)',
+        }}/>
+        {/* Zone system markers (circles) */}
+        {systems.map((s,i) => (
+          <div key={s.id} style={{
+            position:'absolute',
+            left:`${s.macro.spectrumPosition}%`,
+            top:0, transform:'translateX(-50%)',
+          }}>
+            <div style={{
+              width:22,height:22,borderRadius:'50%',
+              background:s.macro.color,
+              border:'2.5px solid white',
+              boxShadow:'0 2px 7px rgba(0,0,0,.2)',
+              margin:'0 auto',
+              animation:'float 2.5s ease-in-out infinite',
+              animationDelay:`${i*.28}s`,
+            }} title={s.macro.label}/>
+            <div style={{width:1.5,height:10,background:'rgba(0,0,0,.15)',margin:'0 auto'}}/>
+            <div style={{
+              fontSize:8,color:'#718096',textAlign:'center',
+              whiteSpace:'nowrap',
+              transform:'translateX(-50%) translateX(11px)',
+              maxWidth:68, overflow:'hidden', textOverflow:'ellipsis',
+            }}>{s.title.split(' ')[0]}</div>
+          </div>
+        ))}
+        {/* Standalone markers (diamonds ◆) */}
+        {STANDALONE_SPECTRUM.map((s,i) => (
+          <div key={s.id} style={{
+            position:'absolute',
+            left:`${s.macro.spectrumPosition}%`,
+            top:4, transform:'translateX(-50%)',
+          }}>
+            <div style={{
+              width:16,height:16,
+              background:s.macro.color,
+              border:'2px solid white',
+              boxShadow:'0 2px 6px rgba(0,0,0,.18)',
+              margin:'0 auto',
+              transform:'rotate(45deg)',
+            }} title={`${s.title}: ${s.macro.label}`}/>
+            <div style={{width:1.5,height:10,background:'rgba(0,0,0,.12)',margin:'0 auto',marginTop:4}}/>
+            <div style={{
+              fontSize:7.5,color:'#a0aec0',textAlign:'center',
+              whiteSpace:'nowrap',
+              transform:'translateX(-50%) translateX(8px)',
+              maxWidth:55,
+            }}>{s.title.replace('（單獨）','')}</div>
+          </div>
+        ))}
+      </div>
+      {/* Labels */}
+      <div style={{display:'flex',justifyContent:'space-between',
+        fontSize:11,color:'#718096',marginTop:4}}>
+        <span>💧 入口即化 / 流體</span>
+        <span>🧸 柔軟彈性</span>
+        <span>🍬 彈Q韌性</span>
+        <span>💎 堅硬脆性</span>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',
+        fontSize:10,color:'#b0bec5',marginTop:5}}>
+        <span>飲料 / 醬汁</span>
+        <span>布丁 / 慕斯</span>
+        <span>QQ凍 / 蒟蒻</span>
+        <span>脆糖 / 玻璃糖</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Data ─────────────── */
+const ZONES = [
+  {
+    id:1, name:'Zone 1', subtitle:'協同效果矩陣', color:C.kappa,
+    systems:[{
+      id:'kgm-kappa',
+      title:'KGM + κ-鹿角菜膠',
+      subtitle:'協同增效 — 彈Q韌性',
+      polymers:[
+        {name:'KGM 蒟蒻',nameEn:'Konjac Glucomannan',color:C.kgm,mw:'~1,000 kDa'},
+        {name:'κ-鹿角菜膠',nameEn:'Kappa Carrageenan',color:C.kappa,mw:'~400 kDa'},
+      ],
+      ions:[{name:'K⁺',color:C.k,effect:'促進 Kappa 螺旋聚集凝膠化'}],
+      interaction:'Synergistic — Attractive Interactions',
+      interactionZh:'KGM 長鏈以約 40–50° 斜角穿插嵌入 Kappa 螺旋接合帶（Junction Zone），形成互鎖式複合凝膠網絡。兩者混合後的凝膠強度顯著高於任一單獨使用。',
+      arrow:'冷卻凝膠化', arrowEn:'Gelation on Cooling',
+      conditions:'pH 6–9 | 溫度 < 40°C | K⁺ 促進 | 耐熱 > 80°C',
+      macro:{label:'彈Q韌性橡膠球',shape:'sphere',color:C.kappa,
+        description:'高破裂應變，強回彈力，類橡皮糖 / 蒟蒻凍條口感',spectrumPosition:65},
+      literature:[
+        'Kohyama K. et al. (1993) Food Hydrocolloids — KGM+Kappa 核心文獻',
+        'Huang L. et al. (2002) Biomacromolecules — 乙醯化 KGM 凝膠行為',
+      ],
+    }],
+  },
+  {
+    id:2, name:'Zone 2', subtitle:'結蘭膠 & 離子互動', color:C.haGellan,
+    systems:[
+      {
+        id:'ha-gellan',
+        title:'HA Gellan Gum',
+        subtitle:'高醯基結蘭膠 — 柔軟彈性',
+        polymers:[{name:'HA 結蘭膠',nameEn:'High Acyl Gellan',color:C.haGellan,mw:'~500 kDa'}],
+        ions:[],
+        interaction:'Steric Hindrance — Loose Helix Network',
+        interactionZh:'醯基側鏈在螺旋外側產生位阻，阻礙鄰近螺旋緊密聚集，形成鬆散、柔性的水合網絡。',
+        arrow:'水合包覆', arrowEn:'Water Entrapment',
+        conditions:'pH 3.5–9 | 耐熱 > 80°C | 無需離子',
+        macro:{label:'柔軟彈性棉花糖塊',shape:'blob',color:C.haGellan,
+          description:'低模量，柔軟彈性，類棉花糖 / 奶油布丁，耐熱穩定',spectrumPosition:22},
+        literature:[
+          'Mao R. et al. (2000) Carbohydrate Polymers — HA/LA 口感比較核心',
+          'Sworn G. (2010) Handbook of Hydrocolloids',
+        ],
+      },
+      {
+        id:'la-gellan-ca',
+        title:'LA Gellan + Ca²⁺',
+        subtitle:'低醯基結蘭膠 — 蛋盒結構',
+        polymers:[{name:'LA 結蘭膠',nameEn:'Low Acyl Gellan',color:C.laGellan,mw:'~500 kDa'}],
+        ions:[{name:'Ca²⁺',color:C.ca,effect:'蛋盒離子橋接，大幅增強凝膠強度'}],
+        interaction:'Egg-Box Ionic Bridging',
+        interactionZh:'去醯化後 LA Gellan 螺旋整齊排列，Ca²⁺ 同時配位相鄰兩條鏈的羧基凹槽，形成蛋盒離子橋接（Egg-Box）結構，每 2 糖單元一個橋接點。',
+        arrow:'+ Ca²⁺ 乳酸鈣', arrowEn:'Ionic Crosslinking',
+        conditions:'pH 3.5–9 | 耐熱 > 80°C | 需 Ca²⁺ 或 K⁺',
+        macro:{label:'堅硬脆性透明膠塊',shape:'crystal',color:C.laGellan,
+          description:'高模量，低應變，玻璃感，高透明度，類脆糖 / 水晶凍',spectrumPosition:90},
+        literature:[
+          'Grant G.T. et al. (1973) FEBS Letters — 蛋盒模型原始論文 ⭐⭐',
+          'Braccini I. & Pérez S. (2001) Biomacromolecules — 更新版蛋盒模型',
+          'Mao R. et al. (2000) Carbohydrate Polymers',
+        ],
+      },
+    ],
+  },
+  {
+    id:3, name:'Zone 3', subtitle:'Pectin、Iota & 流體', color:C.hmPectin,
+    systems:[
+      {
+        id:'hm-pectin',
+        title:'HM 果膠',
+        subtitle:'高甲氧基果膠 — 果醬質地',
+        polymers:[{name:'HM 果膠',nameEn:'High Methoxyl Pectin',color:C.hmPectin,mw:'~150 kDa'}],
+        ions:[],
+        interaction:'Hydrophobic Bonding + Hydrogen Bonding',
+        interactionZh:'甲酯化程度 DE > 50%，在低 pH（3.0–3.5）加高糖（> 55%）條件下，甲酯基疏水聚集形成半流體凝膠，不需離子。',
+        arrow:'低 pH + 高糖', arrowEn:'Low pH + High Sugar',
+        conditions:'pH 3.0–3.5 | 糖度 > 55% | 無需離子',
+        macro:{label:'果醬質地半流體',shape:'jam',color:C.hmPectin,
+          description:'半流體，類果醬 / 果冬，具明顯凝膠感，低 pH 穩定',spectrumPosition:12},
+        literature:[
+          'May C.D. (1990) Carbohydrate Polymers — 工業果膠應用',
+          'Grant G.T. et al. (1973) FEBS Letters',
+        ],
+      },
+      {
+        id:'iota-lbg',
+        title:'Iota + LBG',
+        subtitle:'Iota 鹿角菜膠 + 刺槐豆膠',
+        polymers:[
+          {name:'ι-鹿角菜膠',nameEn:'Iota Carrageenan',color:C.iota,mw:'~450 kDa'},
+          {name:'LBG 刺槐豆膠',nameEn:'Locust Bean Gum',color:C.lbg,mw:'~350 kDa'},
+        ],
+        ions:[{name:'Ca²⁺',color:C.ca,effect:'增強 Iota 螺旋間的離子橋接'}],
+        interaction:'Soft Junction Network + Ca²⁺ Bridging',
+        interactionZh:'LBG 光禿甘露糖主鏈區與 Iota 螺旋形成彈性交聯，Ca²⁺ 輔助橋接。比 Kappa 系統更柔軟，冷凍解凍穩定性優異。',
+        arrow:'+ Ca²⁺', arrowEn:'Soft Gel Formation',
+        conditions:'pH 5–8 | 優良冷凍解凍穩定性',
+        macro:{label:'柔軟彈性',shape:'soft-blob',color:C.iota,
+          description:'柔軟彈性，冷凍解凍穩定，類軟果凍條 / 嫩凍',spectrumPosition:32},
+        literature:[
+          'Dea I.C.M. et al. (1977) Carbohydrate Research — 半乳甘露聚糖協同效應',
+          'Bixler H.J. (2011) Journal of Applied Phycology',
+        ],
+      },
+      {
+        id:'cmc-arabic',
+        title:'CMC + 阿拉伯膠',
+        subtitle:'增稠流體系統',
+        polymers:[
+          {name:'CMC 高黏度',nameEn:'High Viscosity CMC',color:C.cmc,mw:'~90 kDa'},
+          {name:'阿拉伯膠',nameEn:'Arabic Gum',color:C.arabic,mw:'~600 kDa'},
+        ],
+        ions:[],
+        interaction:'Non-Gelling Fluid Network',
+        interactionZh:'短鏈 CMC 與球形阿拉伯膠形成鬆散流體增稠網絡，不成凝膠，提供拉絲包覆感，阿拉伯膠兼具優異乳化功能。',
+        arrow:'增稠', arrowEn:'Thickening Only',
+        conditions:'pH 4–9 | 廣泛溫度穩定 | 無需離子',
+        macro:{label:'增稠流體拉絲',shape:'fluid',color:C.cmc,
+          description:'入口即化，拉絲感，無膠塊感，類糖漿 / 濃縮飲料',spectrumPosition:5},
+        literature:['Williams P.A. & Phillips G.O. (2000) Handbook of Hydrocolloids'],
+      },
+    ],
+  },
+  {
+    id:4, name:'Zone 4', subtitle:'動物明膠對照', color:C.gel240,
+    systems:[
+      {
+        id:'gelatin-240',
+        title:'動物明膠 240 & 160 Bloom',
+        subtitle:'高 / 低布魯姆對照 — 三重螺旋網絡',
+        polymers:[
+          {name:'明膠 240B',nameEn:'Gelatin 240 Bloom',color:C.gel240,mw:'> 200 kDa'},
+          {name:'明膠 160B',nameEn:'Gelatin 160 Bloom',color:C.gel160,mw:'100–200 kDa'},
+        ],
+        ions:[],
+        interaction:'Physical Triple Helix Network (Dense vs Sparse)',
+        interactionZh:'膠原蛋白三條 α 鏈形成左手三重螺旋，240B 高密度交聯（強回彈）vs 160B 低密度（口溶性佳）。兩者均在 35°C 以上融化，這是植物膠體相比之下最大的優勢——耐熱 > 80°C。',
+        arrow:'冷卻 ≤ 15°C', arrowEn:'Physical Gelation',
+        conditions:'⚠️ 240B: 35°C 融化 | 160B: 32°C 融化 | 非耐熱 | 非植物性',
+        macro:{label:'透明、回彈力強膠塊',shape:'crystal-cube',color:C.gel240,
+          description:'240B：高透明，強回彈；160B：柔軟，優良口溶性。兩者皆非耐熱。',
+          spectrumPosition:58, warning:'熱敏感 ≤ 35°C'},
+        literature:[
+          'Ward A.G. & Courts A. (1977) The Science and Technology of Gelatin',
+          'Haug I.J. & Draget K.I. (2011) Handbook of Food Proteins',
+        ],
+      },
+    ],
+  },
+  {
+    id:5, name:'Zone 5', subtitle:'三重協同網絡', color:C.lbg,
+    systems:[{
+      id:'kgm-kappa-lbg',
+      title:'KGM + κ-鹿角菜膠 + LBG',
+      subtitle:'三重協同增效 — 超彈Q複合網絡',
+      polymers:[
+        {name:'KGM 蒟蒻',nameEn:'Konjac Glucomannan',color:C.kgm,mw:'~1,000 kDa'},
+        {name:'κ-鹿角菜膠',nameEn:'Kappa Carrageenan',color:C.kappa,mw:'~400 kDa'},
+        {name:'LBG 刺槐豆膠',nameEn:'Locust Bean Gum',color:C.lbg,mw:'~350 kDa'},
+      ],
+      ions:[{name:'K⁺',color:C.k,effect:'促進 Kappa 螺旋聚集凝膠化'}],
+      interaction:'Triple Synergism — KGM + Kappa + LBG Interpenetrating Network',
+      interactionZh:'LBG 光禿甘露糖區的有序螺旋段同時與 Kappa 螺旋接合帶和 KGM 長鏈形成三重交聯點，三者相互穿插嵌入，形成比 Zone 1（KGM+Kappa）更緻密、更均勻的複合網絡。LBG 扮演「橋接劑」角色，連結兩種主網絡。',
+      arrow:'冷卻凝膠化', arrowEn:'Triple Network Gelation',
+      conditions:'pH 6–9 | 耐熱 > 80°C | K⁺ 促進 | 建議比例 KGM:Kappa:LBG = 4:4:2',
+      macro:{label:'超彈Q三重複合網絡',shape:'sphere',color:'#6BB88A',
+        description:'比 Zone 1 更強韌，彈Q口感更突出，網絡更均勻，耐熱穩定，適合高品質植物果凍',
+        spectrumPosition:72},
+      literature:[
+        'Dea I.C.M. et al. (1977) Carbohydrate Research — LBG 與其他多糖協同效應',
+        'Kohyama K. et al. (1993) Food Hydrocolloids — KGM+Kappa 核心機制',
+        'Williams P.A. (2006) Gums and Stabilisers for the Food Industry — 多元混合體系',
+      ],
+    }],
+  },
+];
+
+/* ─────────────── App ─────────────── */
+function App() {
+  const [activeZone, setActiveZone] = useState(1);
+  const zone = ZONES.find(z => z.id === activeZone);
+  const allSystems = ZONES.flatMap(z => z.systems);
+
+  return (
+    <div style={{minHeight:'100vh',background:'linear-gradient(140deg,#eef2f7,#e4edf6)'}}>
+
+      {/* ── Header ── */}
+      <div style={{
+        background:'linear-gradient(135deg,#1a2038,#2d3a5a)',
+        padding:'22px 32px',
+        boxShadow:'0 4px 22px rgba(0,0,0,.18)',
+      }}>
+        <div style={{maxWidth:1100,margin:'0 auto'}}>
+          <div style={{fontSize:10,color:'rgba(255,255,255,.45)',
+            letterSpacing:2.5,textTransform:'uppercase',marginBottom:5}}>
+            食品科技研發工具 · Food Technology R&D
+          </div>
+          <h1 style={{fontSize:22,fontWeight:'800',color:'white',letterSpacing:.4}}>
+            🧬 植物膠體結構 互動展示系統
+          </h1>
+          <div style={{fontSize:12,color:'rgba(255,255,255,.55)',marginTop:5}}>
+            Hydrocolloid Structure Interactive Display — Molecular Architecture & Texture Mapping
+          </div>
+        </div>
+      </div>
+
+      {/* ── Zone Tabs ── */}
+      <div style={{
+        background:'white',
+        borderBottom:'1px solid rgba(0,0,0,.07)',
+        position:'sticky',top:0,zIndex:100,
+      }}>
+        <div style={{
+          maxWidth:1100,margin:'0 auto',
+          display:'flex',padding:'0 24px',
+          gap:2,overflowX:'auto',
+        }}>
+          {ZONES.map(z => (
+            <button key={z.id} onClick={() => setActiveZone(z.id)} style={{
+              padding:'12px 20px',
+              border:'none',background:'none',cursor:'pointer',
+              borderBottom: activeZone===z.id
+                ? `3px solid ${z.color}` : '3px solid transparent',
+              color: activeZone===z.id ? '#2d3748' : '#718096',
+              fontWeight: activeZone===z.id ? '700' : '400',
+              fontSize:13,whiteSpace:'nowrap',
+              transition:'all .2s',
+              fontFamily:'inherit',
+            }}>
+              <span style={{fontSize:10,opacity:.65}}>{z.name}</span>
+              <br/>{z.subtitle}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'22px 22px 6px'}}>
+        <div style={{
+          fontSize:11,color:'rgba(0,0,0,.38)',
+          marginBottom:14,
+          display:'flex',alignItems:'center',gap:5,
+        }}>
+          <span>💡</span>
+          <span>點擊每張卡片標題可展開作用機制、使用條件與關鍵文獻</span>
+        </div>
+        {zone.systems.map(s => <SystemCard key={s.id} system={s}/>)}
+      </div>
+
+      {/* ── Spectrum Bar ── */}
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'0 22px 36px'}}>
+        <TextureSpectrum systems={allSystems}/>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
