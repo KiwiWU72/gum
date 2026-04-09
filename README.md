@@ -1,8 +1,6 @@
 # Hydrocolloid Structure Interactive Display System 植物膠體結構互動展示系統
 
-Hydrocolloid Structure Interactive Display System
 這是一個專為食品科技研發（R&D）設計的視覺化工具，旨在透過第一性原理（First Principles）解析各種植物膠體的分子結構、交聯機制及其對應的巨觀口感質地。
-
 This is a visualization tool designed for Food Technology R&D, aimed at analyzing the molecular structures, crosslinking mechanisms, and macro-textural properties of various plant-based hydrocolloids using a First Principles approach.
 
 🔬 核心功能 | Key Features
