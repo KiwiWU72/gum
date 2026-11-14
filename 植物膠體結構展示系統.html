@@ -77,6 +77,11 @@ body {
 @keyframes jitter   { 0%,100% { transform: translate(0,0) } 33% { transform: translate(5px,-4px) } 66% { transform: translate(-5px,3px) } }
 @keyframes formMelt { 0%,15% { opacity:.08 } 40%,70% { opacity:1 } 90%,100% { opacity:.08 } }
 @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+@keyframes squeezeT { 0%,15% { transform: translate(0,0) } 55%,85% { transform: translate(0,9px) } 100% { transform: translate(0,0) } }
+@keyframes squeezeB { 0%,15% { transform: translate(0,0) } 55%,85% { transform: translate(0,-9px) } 100% { transform: translate(0,0) } }
+@keyframes dropOut  { 0%,30% { transform: translate(0,0); opacity:1 } 75% { transform: translate(0,62px); opacity:1 } 90%,100% { transform: translate(0,66px); opacity:0 } }
+@keyframes puddle   { 0%,40% { transform: scaleX(.2); opacity:0 } 75%,90% { transform: scaleX(1); opacity:1 } 100% { transform: scaleX(1); opacity:0 } }
+@keyframes bobble   { 0%,100% { transform: translate(0,0) } 50% { transform: translate(0,-3px) } }
 @keyframes iconBob  { 0%,100% { transform: translateY(0) rotate(0deg) } 50% { transform: translateY(-3px) rotate(-4deg) } }
 .paused * { animation-play-state: paused !important; }
 button:focus { outline: none; }
@@ -511,6 +516,50 @@ function Glow({x, y, w, t, tx, ty}) {
   );
 }
 
+function Drop({x, y, r=5, c='#5BB8F5'}) {
+  return <path d={`M${x} ${y - r*1.6} C ${x + r} ${y - r*0.3}, ${x + r} ${y + r}, ${x} ${y + r} C ${x - r} ${y + r}, ${x - r} ${y - r*0.3}, ${x} ${y - r*1.6} Z`} fill={c} opacity=".9"/>;
+}
+function KHelix({x0, x1, y, ph=0}) {
+  return <Helix x0={x0} x1={x1} y={y} amp={8} per={52} nPer={6} r={4.6} phase={ph} faceStrand={-1} seqs={[['GalS','AnG'],['AnG','GalS']]}/>;
+}
+function SynCompare({kgm}) {
+  const lbg = chainPts(12, 238, 16.5, 104, 2, 8);
+  const gal = [1, 3, 4, 7, 9, 10];
+  return (
+    <SVGBox vb={VB}>
+      <line x1="220" y1="14" x2="220" y2="196" stroke="#e5e5ea" strokeWidth="1.5"/>
+      <Label x={110} y={16} t="只有 κ（冷藏放幾天）" fs={10} c="#1d1d1f" w={800}/>
+      <Label x={330} y={16} t={kgm ? 'κ + KGM + LBG' : 'κ + LBG'} fs={10} c="#1d1d1f" w={800}/>
+      <g style={anim('squeezeT', 6)}><KHelix x0={18} x1={202} y={58}/><KHelix x0={18} x1={202} y={78} ph={1}/></g>
+      <g style={anim('squeezeB', 6)}><KHelix x0={18} x1={202} y={112} ph={2}/><KHelix x0={18} x1={202} y={132} ph={3}/></g>
+      {[50, 84, 118, 152, 186].map((x, i) => (
+        <g key={x} style={anim('dropOut', 6, i*0.12)}><Drop x={x} y={96}/></g>
+      ))}
+      {[60, 110, 160].map(x => <Ion key={x} x={x} y={96} t="K⁺" c={C.k} r={6}/>)}
+      <ellipse cx="110" cy="166" rx="80" ry="6" fill="#5BB8F5" opacity=".5" style={{...anim('puddle', 6), transformOrigin:'110px 166px'}}/>
+      <Label x={110} y={182} t="螺旋越抱越緊 → 網子收縮" fs={8.5} c="#1a6a8a"/>
+      <Label x={110} y={196} t="水被擠出來（離水）→ 硬、脆" fs={8.5} c="#c62828" w={800}/>
+      <KHelix x0={232} x1={428} y={46}/><KHelix x0={232} x1={428} y={66} ph={1}/>
+      <KHelix x0={232} x1={428} y={142} ph={2}/><KHelix x0={232} x1={428} y={162} ph={3}/>
+      <Chain pts={lbg} seq={['Man']} r={5.5} faceAt={0} wob={0}/>
+      {gal.map((i, k) => {
+        const up = k % 2 === 0, p = lbg[i];
+        return (
+          <g key={i}>
+            <line x1={p.x} y1={p.y} x2={p.x} y2={p.y + (up ? -16 : 16)} stroke="#c7c7cc" strokeWidth="1.6"/>
+            <Bead x={p.x} y={p.y + (up ? -18 : 18)} r={4.8} c={S.Gal.c}/>
+            <g style={anim('bobble', 2 + k*0.3)}><Drop x={p.x + 9} y={p.y + (up ? -22 : 24)} r={3.6}/></g>
+          </g>
+        );
+      })}
+      {kgm && <g style={anim('bobble', 3)}>
+        <Chain pts={chainPts(12, 240, 16.5, 84, 1.5, 8)} seq={['Man','Glc','Man','Man','Glc']} r={4.6} faceAt={11} wob={0}/>
+      </g>}
+      <Label x={330} y={182} t="LBG 擋在螺旋之間 → 不會抱太緊 → 軟、有彈性" fs={8} c="#2a7a3a"/>
+      <Label x={330} y={196} t="半乳糖側枝抓住水 → 冷藏也不出水" fs={8.5} c="#0071e3" w={800}/>
+    </SVGBox>
+  );
+}
 function DiaKGMKappa() {
   const kgm = [...chainPts(5, 20, 14, 30, 0, 8).map((p, i) => ({x:p.x, y:30 + i*10})),
                ...chainPts(14, 90, 14, 82, 1.5, 10),
@@ -885,6 +934,8 @@ function MacroPanel({m}) {
    ═══════════════════════════════════════════════════════════ */
 const ZONE0 = [
   { id:'kgm', name:'KGM 蒟蒻膠', en:'Konjac Glucomannan', color:C.kgm, border:'#A07830', art:<ArtKGM/>,
+    pros:['黏度極高，少量就能增稠、保水', '可溶性膳食纖維、熱量低', '與 κ-鹿角菜膠、三仙膠協同強，能做出Q彈有咬勁的口感', '加鹼凝膠熱不可逆，能做耐煮的蒟蒻麵、蒟蒻塊'],
+    cons:['溶解慢、容易結塊，要先跟糖或其他粉預混', '鹼凝膠有鹼味，需要浸泡去鹼', '做成小杯果凍有噎嗆風險：歐盟禁止用於果凍（含迷你杯果凍）', '黏度高，濃度一高就很難攪拌、充填'],
     kid:['蒟蒻膠像一條超級長的珍珠項鍊，黃色和米色兩種珠子隨便串在一起', '偶爾會戴一頂小帽子（乙醯基）。帽子讓項鍊不會黏成一團，所以能溶在水裡；把帽子拿掉，項鍊就會自己黏起來變成果凍'],
     uni:['β-1,4 連結的甘露糖與葡萄糖無規共聚物（Man：Glc ≈ 1.6：1），C-3 位約 8% 分支', 'C-6 乙醯基（約每 9–19 個殘基 1 個）提供立體障礙與溶解度；鹼處理去乙醯後，鏈間締合形成熱不可逆凝膠'],
     real:['✔ 糖的比例、乙醯基頻率、少量分支：依 JECFA 與文獻比例畫', '✖ 真實鏈長 1,000 顆糖以上，這裡只畫 20 顆；溶液中是隨機捲曲，不是直線'],
@@ -893,6 +944,8 @@ const ZONE0 = [
       '凝膠':'單獨：加鹼（pH 9–10）加熱去乙醯 → 熱不可逆凝膠；協同：κ-鹿角菜膠、三仙膠',
       '文獻':'JECFA (1996) Konjac flour spec.；Kök M.S. et al. (2009) Food Hydrocolloids 23:1910' } },
   { id:'kappa', name:'κ-鹿角菜膠', en:'Kappa Carrageenan', color:C.kappa, border:'#1a7da0', art:<ArtKappa/>,
+    pros:['少量就能凝膠、成本合理', '凝膠透明，可做清透果凍', '能和牛奶蛋白作用，乳製品（布丁、巧克力牛奶）穩定效果好', '可與 LBG、KGM 協同，調整口感'],
+    cons:['單用硬、脆，放久會出水（離水）', '冷凍解凍後結構會破壞、出水', '酸性下加熱會降解，酸性產品要晚一點加入', '需要 K⁺ 才能凝膠得好'],
     kid:['鹿角菜膠像兩條手牽手轉圈圈的項鍊（雙螺旋）', '鉀離子像小磁鐵，把好多條螺旋吸在一起，所以果凍會變硬、變脆，放久了還會流出水'],
     uni:['G4S–DA 交替雙糖重複，每雙糖 1 個硫酸酯；冷卻時發生 coil → helix 構形轉變', 'K⁺ 專一性促進螺旋聚集，形成高模量、易脆裂、會離水（syneresis）的熱可逆凝膠'],
     real:['✔ 交替的雙糖、硫酸根數量、冷卻成螺旋再被 K⁺ 聚集', '✖ 螺旋畫成平面波浪；學界對「單螺旋或雙螺旋」仍有討論'],
@@ -900,6 +953,8 @@ const ZONE0 = [
       '硫酸根':'每雙糖 1 個（約 25% 重量）', '電荷':'負電', '凝膠':'加熱溶解 → 冷卻成螺旋 → K⁺ 使螺旋聚集；硬脆、會離水、熱可逆',
       '文獻':'Rees D.A. (1972) Biochemical Journal 126:257；Morris E.R., Rees D.A., Robinson G. (1980) J. Mol. Biol. 138:349' } },
   { id:'iota', name:'ι-鹿角菜膠', en:'Iota Carrageenan', color:C.iota, border:'#6b3fa0', art:<ArtIota/>,
+    pros:['柔軟有彈性，不太會出水', '冷凍解凍穩定', '攪拌後能回復，適合需要泵送、充填的產品', '遇鈣或牛奶蛋白就能凝膠，適合乳製甜點'],
+    cons:['凝膠強度低，單用撐不太住形狀', '需要 Ca²⁺', '跟 LBG 幾乎沒有協同效果', '酸性下加熱同樣會降解'],
     kid:['跟 κ 很像，但每顆珠子都背著帶電的小書包（硫酸根），書包多一倍', '書包太多，螺旋擠不太近，所以做出來的果凍軟軟彈彈，冷凍再退冰也不太會出水'],
     uni:['G4S–DA2S 重複，每雙糖 2 個硫酸酯；靜電排斥限制螺旋緊密聚集', 'Ca²⁺ 橋接形成低模量彈性凝膠，剪切後可回復，凍融穩定、低離水'],
     real:['✔ 硫酸根數量（每雙糖 2 個）、Ca²⁺ 凝膠', '✖ 同 κ：螺旋平面化'],
@@ -907,6 +962,8 @@ const ZONE0 = [
       '電荷':'強負電', '凝膠':'Ca²⁺ 下形成柔軟彈性凝膠；冷凍解凍穩定、幾乎不離水',
       '文獻':'Morris E.R. et al. (1980) J. Mol. Biol. 138:349；Imeson A.P. (2009) Handbook of Hydrocolloids, 2nd ed.' } },
   { id:'lbg', name:'LBG 刺槐豆膠', en:'Locust Bean Gum', color:C.lbg, border:'#3a7a28', art:<ArtLBG/>,
+    pros:['和 κ-鹿角菜膠、三仙膠協同：凝膠變有彈性、減少離水', '冰淇淋中能減少冰晶、讓口感滑順', '中性、不受鹽和 pH 影響'],
+    cons:['要加熱到約 80°C 才完全溶解', '單獨不會凝膠', '溶液會混濁，做不出很透明的產品', '角豆收成影響供應，價格容易波動'],
     kid:['刺槐豆膠是一條長項鍊，有些地方掛滿綠色小吊飾，有些地方光禿禿', '光禿禿的地方（平滑區）很黏人，可以貼在別的膠體身上，一起變成果凍'],
     uni:['半乳甘露聚醣：β-1,4 甘露聚醣主鏈 + α-1,6 半乳糖單糖側基，M/G ≈ 3.5–4', '未取代區段（smooth region）可與 κ-鹿角菜膠、三仙膠的有序結構形成鏈間締合，是協同凝膠的關鍵'],
     real:['✔ Man：Gal ≈ 4：1、平滑區 / 毛茸區分布', '✖ 半乳糖到底是成塊還是隨機分布，文獻仍有爭議；這裡畫成成塊方便理解'],
@@ -914,6 +971,8 @@ const ZONE0 = [
       '電荷':'中性', '溶解':'需加熱約 80°C 才完全溶解', '凝膠':'單獨不凝膠；平滑區可與 κ-鹿角菜膠、三仙膠、洋菜協同',
       '文獻':'Dea I.C.M. et al. (1977) Carbohydrate Research 57:249' } },
   { id:'guar', name:'瓜爾膠', en:'Guar Gum', color:C.guar, border:'#4a7a2a', art:<ArtGuar/>,
+    pros:['冷水就能溶解，使用方便', '增稠效率高、價格低', '和三仙膠有黏度協同，可降低總用量', '冰品中能抑制冰晶'],
+    cons:['不會凝膠，也很難和 κ 協同成膠', '高溫長時間加熱、或在酸性下，黏度會下降', '用量高時有豆腥味、口感黏糊', '容易結塊，要先分散'],
     kid:['瓜爾膠跟刺槐豆膠是兄弟，但身上的吊飾多一倍，幾乎沒有光禿禿的地方', '所以它很容易溶在冷水裡、變得很黏，可是很難跟別人黏成果凍'],
     uni:['M/G ≈ 2，半乳糖取代度高且分布較均勻，缺乏長的未取代區段', '高度水合、冷水可溶；與三仙膠只有黏度協同（viscosity synergism），不形成凝膠'],
     real:['✔ Man：Gal ≈ 2：1', '✖ 側枝畫成完全規律；真實是近似規律'],
@@ -921,6 +980,8 @@ const ZONE0 = [
       '電荷':'中性', '溶解':'冷水可溶，黏度很高', '凝膠':'不凝膠；與三仙膠只有「黏度協同」',
       '文獻':'Dea I.C.M. et al. (1977) Carbohydrate Research 57:249' } },
   { id:'xanthan', name:'三仙膠', en:'Xanthan Gum', color:C.xanthan, border:'#a06010', art:<ArtXanthan/>,
+    pros:['少量就有黏度；耐酸鹼、耐鹽、耐熱', '懸浮能力強，顆粒、香料不會沉底', '冷熱水都可溶', '剪切變稀：好倒、好吞，停下來又變濃'],
+    cons:['用量高時有「黏滑」的口感', '單獨不會凝膠', '溶液略混濁', '容易結塊，要先分散'],
     kid:['三仙膠的主幹像一根硬棒子，每隔一顆珠子就掛一串三顆珠子的小尾巴', '小尾巴帶電，讓棒子撐得直直的。攪拌時會變稀、停下來又變濃，所以醬汁好倒又不會流太快'],
     uni:['纖維素主鏈，每隔一個葡萄糖在 C-3 接上 Man–GlcA–Man 三糖側鏈；內側 Man 多乙醯化、外側 Man 多丙酮酸化', '有序態為剛性螺旋（棒狀），溶液高度假塑性（shear-thinning）、具弱凝膠性，耐鹽、耐酸鹼'],
     real:['✔ 側鏈位置與組成、乙醯基 / 丙酮酸位置', '✖ 真實是五重螺旋、側鏈會折回貼著主鏈；這裡攤平畫，方便看側鏈'],
@@ -929,6 +990,8 @@ const ZONE0 = [
       '特性':'剪切變稀、耐鹽、耐酸鹼（約 pH 3–11）', '凝膠':'單獨不凝膠；與 LBG、KGM 協同成膠',
       '文獻':'Jansson P.E., Kenne L., Lindberg B. (1975) Carbohydrate Research 45:275' } },
   { id:'cmc', name:'CMC 羧甲基纖維素', en:'Carboxymethyl Cellulose', color:C.cmc, border:'#3a6a88', art:<ArtCMC/>,
+    pros:['溶液透明', '冷熱水都可溶、價格低', '酸性乳飲中能防止蛋白質沉澱', '保水、在冰品中減少冰晶'],
+    cons:['不會凝膠', 'pH 太低時黏度下降，甚至析出', '遇到多價金屬離子（如 Al³⁺、Fe³⁺）可能沉澱', '屬於化學改質的纖維素，不利「天然 / 清潔標章」訴求'],
     kid:['CMC 是把纖維素（植物的骨架）裝上很多藍色小水滴，讓它能溶在水裡', '小水滴都帶負電、互相推開，鏈會伸得長長的，讓飲料變稠，但不會變成果凍'],
     uni:['纖維素羧甲基化，食品級 DS 約 0.6–0.95；陰離子聚電解質', '靜電排斥使鏈伸展、流體力學體積大而增稠；可吸附於酪蛋白，在酸性乳飲中提供靜電與空間穩定'],
     real:['✔ 主鏈與取代基位置', '✖ 取代基其實分布在 C-2/C-3/C-6 不同位置，這裡只畫上下兩側'],
@@ -936,6 +999,8 @@ const ZONE0 = [
       '取代度 DS':'食品級多為 0.6–0.95', '電荷':'負電', '特性':'取代度高 → 溶解度、耐鹽性較好；黏度主要由分子量決定',
       '凝膠':'不凝膠（增稠、保水、防蛋白沉澱）', '文獻':'Whistler R.L. & BeMiller J.N. (1993) Industrial Gums, 3rd ed.' } },
   { id:'ha-gellan', name:'HA 高醯基結蘭膠', en:'High Acyl Gellan', color:C.haGellan, border:'#b04060', art:<ArtHAGellan/>,
+    pros:['極低用量就能懸浮顆粒（植物奶、果粒飲）', '軟、有彈性、幾乎不出水', '熱可逆，可加熱調整'],
+    cons:['凝固溫度高（約 70–80°C），充填前容易提早凝固', '霧白不透明', '高糖、低 pH 下不易水合，要先溶好再加糖、加酸', '價格比鹿角菜膠高'],
     kid:['結蘭膠是四顆珠子一組的雙螺旋；高醯基版本身上長滿粉紅小毛球', '毛球把螺旋隔開，它們只能輕輕牽手，所以做出來的東西軟軟 Q Q、霧霧的'],
     uni:['四糖重複 Glc–GlcA–Glc–Rha；3-連結 Glc 上帶甘油酸基（約 1 個 / 重複）與乙醯基（約 0.5 個 / 重複）', '醯基阻礙雙螺旋緊密聚集，形成低模量、高彈性、幾乎無熱遲滯的凝膠（約 70–80°C 凝固 / 融化）'],
     real:['✔ 四糖重複、醯基數量', '✖ 醯基真實大小比毛球小很多；放大是為了說明「擋住」的效果'],
@@ -943,6 +1008,8 @@ const ZONE0 = [
       '電荷':'負電', '凝膠':'不需外加離子；約 70–80°C 凝固，加熱至相近溫度又融化（熱可逆）',
       '口感':'軟、有彈性、不脆、不太出水、霧狀不透明', '文獻':'Morris E.R., Nishinari K., Rinaudo M. (2012) Food Hydrocolloids 28:373；Mao R. et al. (2000) Carbohydrate Polymers 41:331' } },
   { id:'la-gellan', name:'LA 低醯基結蘭膠', en:'Low Acyl Gellan', color:C.laGellan, border:'#1a5a90', art:<ArtLAGellan/>,
+    pros:['極低用量就能凝膠', '非常透明，風味釋放佳', 'Ca²⁺ 足夠時很耐熱（接近熱不可逆）'],
+    cons:['硬、脆，容易碎', '容易離水', '對離子濃度很敏感：太少不凝、太多反而變弱、變混濁', '需要另外補鈣或鎂'],
     kid:['把毛球拿掉，螺旋就變得滑溜溜', '鈣離子像釘書針，把螺旋一條條釘得整整齊齊，所以變成硬硬脆脆、亮晶晶的水晶凍'],
     uni:['脫醯後雙螺旋可緊密聚集；GlcA 羧基經 Ca²⁺ / Mg²⁺ 橋接（K⁺、Na⁺ 以電荷屏蔽促進）', '形成高模量、低斷裂應變、高透明度凝膠；陽離子足量時熔點大幅上升'],
     real:['✔ 螺旋聚集 + 二價陽離子橋接', '✖ 嚴格的「蛋盒模型」是描述海藻酸與低酯果膠；結蘭膠是「螺旋聚集」機制，概念相近但不相同'],
@@ -950,6 +1017,8 @@ const ZONE0 = [
       '凝膠':'需要 Ca²⁺、Mg²⁺（或較高濃度 K⁺、Na⁺）；硬、脆、透明；Ca²⁺ 足夠時接近熱不可逆',
       '口感':'切口乾淨、碎裂、像水晶凍', '文獻':'Morris E.R. et al. (2012) Food Hydrocolloids 28:373；Mao R. et al. (2000) Carbohydrate Polymers 41:331' } },
   { id:'hm-pectin', name:'HM 高甲氧基果膠', en:'High Methoxyl Pectin', color:C.hmPectin, border:'#c02020', art:<ArtHMPectin/>,
+    pros:['傳統果醬的標準膠體，透明有光澤', '酸性下穩定', '來自柑橘皮、蘋果渣，天然形象好'],
+    cons:['一定要高糖（> 55%）＋ 低 pH，不適合低糖產品', '凝膠後不能再加熱融化重來', '凝固速度（快凝 / 慢凝）要依製程選對規格'],
     kid:['果膠是一串紅色珠子，高甲氧基果膠大部分珠子都戴著「Me」帽子', '要變成果醬，得加很多糖把水搶走、加酸讓珠子不再互相推開，鏈才會靠在一起'],
     uni:['α-1,4 聚半乳糖醛酸，酯化度 DE > 50%，間雜 RG-I 毛茸區', '低 pH 抑制羧基解離、高可溶性固形物降低水活性，促使甲酯疏水締合與氫鍵形成接合區'],
     real:['✔ 酯化度、鼠李糖彎折與毛茸區', '✖ 真實的毛茸區（RG-I）側鏈很長很複雜，這裡只畫 3 顆代表'],
@@ -957,12 +1026,16 @@ const ZONE0 = [
       '電荷':'弱負電', '凝膠':'pH 約 2.8–3.5 + 可溶性固形物 > 55%；疏水作用 + 氫鍵，不需 Ca²⁺',
       '文獻':'Oakenfull D. & Scott A. (1984) J. Food Science 49:1093；May C.D. (1990) Carbohydrate Polymers 12:79' } },
   { id:'lm-pectin', name:'LM 低甲氧基果膠', en:'Low Methoxyl Pectin', color:C.lmPectin, border:'#c05010', art:<ArtLMPectin/>,
+    pros:['不需要高糖，適合低糖果醬、優格果粒', 'pH 範圍寬', '凝膠可加熱再融化（熱可逆）'],
+    cons:['需要鈣，而且對鈣量很敏感：太多會提早凝膠、出現顆粒感', '原料本身的鈣（例如水果、牛奶）會影響結果，要實測調整'],
     kid:['低甲氧基果膠的帽子很少，一整段都帶負電', '鈣離子像雞蛋，剛好卡進兩條鏈中間的「蛋盒」，把它們扣在一起——不用加很多糖也能做果醬'],
     uni:['DE < 50%，連續未酯化的 GalA 區段可形成接合區', 'Ca²⁺ 與兩條鏈的羧基、羥基配位形成 egg-box 二聚體並進一步聚集；不依賴高糖與低 pH'],
     real:['✔ 蛋盒模型就是為這類多醣提出的', '✖ 真實蛋盒是鏈扭成 2 重螺旋後對齊；這裡畫成直線'],
     data:{ '分子量':'約 50–150 kDa', '酯化度 DE':'< 50%（常見 20–45%；另有醯胺化型）', '電荷':'較強負電',
       '凝膠':'Ca²⁺ 蛋盒交聯；不需高糖，pH 範圍寬', '文獻':'Grant G.T. et al. (1973) FEBS Letters 32:195；Braccini I. & Pérez S. (2001) Biomacromolecules 2:1089' } },
   { id:'arabic', name:'阿拉伯膠', en:'Gum Arabic (Acacia senegal)', color:C.arabic, border:'#806020', art:<ArtArabic/>,
+    pros:['濃度很高仍然不黏', '乳化效果好：飲料香精乳化液的標準材料', '可成膜包覆（糖衣、香料微膠囊）', '可溶性膳食纖維'],
+    cons:['產地集中（如蘇丹、查德），價格和供應波動大', '乳化需要較高用量', '幾乎不增稠', '天然原料，批次之間有差異'],
     kid:['阿拉伯膠大部分（約 9 成）是一塊塊扁扁、緊緊的「醣餅乾」，所以很濃也不黏', '少部分是一條蛋白質小繩子，上面掛滿醣；繩子那頭會抓住油，讓油滴不會黏在一起'],
     uni:['AG 部分（約 88%）：高度分支的阿拉伯半乳聚醣（只含少量胜肽），形狀是薄扁橢球', 'AGP 部分（約 10%）：富含羥脯胺酸的長多胜肽骨架，以 O-糖苷鍵接上醣側鏈；胜肽吸附油水界面、醣鏈提供空間穩定'],
     real:['✔ 兩大組成：AG（約 88%，扁平醣盤）與 AGP（約 10%，蛋白質骨架 + 醣）', '✖ AGP 的醣是「少數大塊」（花束模型）還是「很多小撮沿著繩子」（毛繩模型），學界仍有兩派；這裡畫成大塊比較好看清楚'],
@@ -973,6 +1046,8 @@ const ZONE0 = [
       '電荷':'弱負電（GlcA）', '特性':'可溶到約 50% 仍低黏度；優良乳化劑（飲料香精乳化）',
       '文獻':'Randall R.C., Phillips G.O., Williams P.A. (1989) Food Hydrocolloids 3:65；Qi W., Fong C., Lamport D.T.A. (1991) Plant Physiology 96:848；Sanchez C. et al. (2008) Biophysical Journal 94:629' } },
   { id:'gelatin', name:'動物明膠', en:'Gelatin (240 / 160 Bloom)', color:C.gel, border:'#3050A0', art:<ArtGelatin/>,
+    pros:['入口即化（接近體溫就融化）', '彈性好、透明', '可起泡、成膜（棉花糖、膠囊）'],
+    cons:['非素食；豬 / 牛來源有宗教飲食限制', '不耐熱：夏天或常溫流通容易融化', '新鮮鳳梨、奇異果、木瓜的蛋白酶會分解明膠，讓果凍凝不起來'],
     kid:['明膠是從膠原蛋白來的三條蛋白質繩子', '冰起來時繩子會一小段一小段重新纏成三股辮子，就變成果凍；一放進嘴巴（體溫）辮子就散開，所以入口即化'],
     uni:['Gly–X–Y 重複（X、Y 多為 Pro、Hyp），由膠原熱變性取得', '冷卻時部分片段回復成右旋三股超螺旋（每條鏈為左旋），作為物理交聯點；熔點約 30–35°C（依 Bloom 與濃度）'],
     real:['✔ 部分回復膠原三股螺旋的凝膠機制', '✖ 胺基酸畫成同色珠子；真實每 3 個胺基酸就有 1 個甘胺酸'],
@@ -1004,16 +1079,16 @@ const ZONES = [
       lit:['Kohyama K., Iida H., Nishinari K. (1993) Food Hydrocolloids 7:213 — KGM + κ 混合凝膠', 'Goycoolea F.M., Morris E.R., Gidley M.J. (1995) Carbohydrate Polymers 27:69 — 協同交互作用篩選'],
       m:{ label:'彈Q有咬勁', icon:'jelly', iconC:'#7EC8E3', like:'蒟蒻凍條、Q彈果凍', spoon:'壓下去會回彈，用力才裂開', shape:'sphere', color:C.kappa,
         r:{hard:3, elastic:5, brittle:2, clear:3, heat:3}, pos:68 } },
-    { id:'kappa-lbg', short:'κ+LBG', title:'κ-鹿角菜膠 + LBG', app:'果凍、布丁、冰淇淋穩定劑', level:'strong', dia:<DiaKappaLBG/>,
+    { id:'kappa-lbg', short:'κ+LBG', title:'κ-鹿角菜膠 + LBG', app:'果凍、布丁、冰淇淋穩定劑', level:'strong', dia:<SynCompare/>,
       arrow:'加熱溶解 → 冷卻', ions:['K⁺'],
-      mech:'LBG 的平滑區（沒有半乳糖側枝的甘露糖段）可以貼上 κ 螺旋；毛茸區留在水裡保水。結果是 κ 原本的「硬、脆、出水」變成「有彈性、比較不出水」。文獻報告最大彈性模數出現在 κ：LBG 約 1：1 到 3：1。',
+      mech:'只用 κ 時，冷卻後的螺旋被 K⁺ 越拉越緊、聚成一大束，網子收縮就把水擠出來（離水），口感硬又脆。加入 LBG 後，電子顯微鏡觀察到 LBG 會阻礙 κ 螺旋彼此聚集（Lundin & Hermansson 1995）：螺旋不能抱太緊，所以變軟、變有彈性；LBG 毛茸的半乳糖側枝又能抓住水，冷藏放置時比較不會出水。文獻也量到加入 LBG 後離水減少、斷裂前可拉伸得更長（Murayama 等 1990）。',
       cond:'需加熱溶解（LBG 約 80°C）；K⁺ 促進；熱可逆；LBG 會讓凝膠稍微混濁',
-      lit:['Tako M. & Nakamura S. (1986) Agricultural and Biological Chemistry 50:2817 — κ + LBG 協同', 'Fernandes P.B. et al. (1991) Carbohydrate Polymers 16:253 — 不同 LBG 的比較'],
+      lit:['Lundin L. & Hermansson A.M. (1995) — LBG 阻礙 κ 螺旋自我聚集（TEM 觀察）', 'Murayama A., Osako S., Kawabata A. (1990) 日本家政學會誌 41:133 — 加 LBG 減少離水、斷裂應變增加；甜點果凍建議 κ：LBG 約 7：3–6：4', 'Tako M. & Nakamura S. (1986) Agricultural and Biological Chemistry 50:2817 — κ + LBG 協同'],
       m:{ label:'有彈性、不出水', icon:'pudding', like:'雞蛋布丁、彈性果凍', spoon:'會凹下再回彈，切面濕潤不出水', shape:'pudding', color:'#8CC9B0',
         r:{hard:3, elastic:4, brittle:2, clear:2, heat:3}, pos:55 } },
-    { id:'jelly', short:'果凍', title:'果凍：κ-鹿角菜膠 + KGM + LBG', app:'市售果凍粉、植物性果凍', level:'strong', dia:<DiaJelly/>,
+    { id:'jelly', short:'果凍', title:'果凍：κ-鹿角菜膠 + KGM + LBG', app:'市售果凍粉、植物性果凍', level:'strong', dia:<SynCompare kgm={true}/>,
       arrow:'加熱溶解 → 冷卻', ions:['K⁺'],
-      mech:'同一個 κ 螺旋網子上同時接上 KGM 與 LBG：KGM 主要貢獻韌性與咬勁，LBG 主要貢獻柔軟、保水與減少離水。這是業界常見的複配思路；三者的最佳比例沒有通用答案，需依目標口感（偏 Q 或偏嫩）試配。',
+      mech:'κ 提供螺旋骨架；KGM 長鏈貢獻韌性與咬勁；LBG 擋在螺旋之間不讓它們抱太緊（變軟、有彈性），半乳糖側枝抓住水（冷藏不出水）。這是業界常見的複配思路；三者的最佳比例沒有通用答案，需依目標口感（偏 Q 或偏嫩）試配。',
       cond:'需加熱溶解；K⁺ 促進；熱可逆；比例依目標口感調整',
       lit:['Kohyama K. et al. (1993) Food Hydrocolloids 7:213', 'Tako M. & Nakamura S. (1986) Agric. Biol. Chem. 50:2817', 'Williams P.A. & Phillips G.O. eds. (2009) Handbook of Hydrocolloids, 2nd ed.'],
       m:{ label:'Q彈滑嫩', icon:'jelly', iconC:'#FF9EB5', like:'台灣市售杯裝果凍', spoon:'彈回來，口中慢慢碎開不黏牙', shape:'sphere', color:'#6BB88A',
@@ -1143,6 +1218,14 @@ function Zone0Card({g, mode}) {
       <div style={{margin:'8px 16px', background:'#f5f5f7', borderRadius:12, padding:'8px 12px'}}>
         <div style={{fontSize:11, fontWeight:800, color:C.sub, marginBottom:3}}>跟真實分子差在哪？</div>
         {g.real.map((t, i) => <div key={i} style={{fontSize:11.5, color: t.startsWith('✔') ? '#1e8e3e' : '#b45309', lineHeight:1.55}}>{t}</div>)}
+      </div>
+      <div style={{margin:'8px 16px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+        {[['👍 食品應用優點', g.pros, '#1e8e3e', '#e6f4ea'], ['⚠️ 食品應用缺點', g.cons, '#b45309', '#fff4e5']].map(([h, list, c, bg]) => (
+          <div key={h} style={{background:bg, borderRadius:12, padding:'8px 10px'}}>
+            <div style={{fontSize:11.5, fontWeight:800, color:c, marginBottom:4}}>{h}</div>
+            {list.map((t, i) => <div key={i} style={{fontSize:11.5, color:C.ink, lineHeight:1.55, marginBottom:3}}>• {t}</div>)}
+          </div>
+        ))}
       </div>
       <button onClick={() => setOpen(o => !o)} style={{margin:'2px 16px 12px', border:'none', background:'none',
         color:C.blue, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit'}}>
@@ -1284,6 +1367,8 @@ function Changelog() {
     'HM 果膠文獻：原引用的 Grant 1973 是蛋盒模型（屬 LM 果膠），改為 Oakenfull & Scott 1984',
     '新增：瓜爾膠、κ + LBG、三仙膠 + LBG、三仙膠 + KGM、三仙膠 + 瓜爾膠、LM 果膠 + Ca²⁺',
     '阿拉伯膠：補充主要成分 AG（約 88%，扁平醣盤）與 AGP（約 10%）的差別；說明 AGP 的蛋白質是伸展的長胜肽鏈，不是球狀顆粒',
+    'κ + LBG、果凍的示意圖改成「只有 κ vs. 加了 LBG」對照動畫，直接看到 LBG 如何讓凝膠變軟、冷藏不出水',
+    '每種膠體新增「食品應用優點 / 缺點」',
     '分子圖與協同機制改為動畫；說明分成小學生版 / 大學生版；口感圖示改為自繪可愛食物；豆花卡片新增 7 種做法比較',
   ];
   const [open, setOpen] = useState(false);
