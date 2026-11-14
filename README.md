@@ -1,35 +1,46 @@
-# Hydrocolloid Gum Structure Interactive Display System 植物膠體結構互動展示系統
+# Hydrocolloid Gum Structure Interactive Display 植物膠體結構互動展示系統
 
-這是一個專為食品科技研發（R&D）設計的視覺化工具，旨在透過第一性原理（First Principles）解析各種植物膠體 colloid gum 的分子結構、交聯機制及其對應的巨觀口感質地。
-This is a visualization tool designed for Food Technology R&D, aimed at analyzing the molecular structures, crosslinking mechanisms, and macro-textural properties of various plant-based hydrocolloids using a First Principles approach.
+這是給食品研發用的視覺化工具。網站用「可愛但盡量接近真實」的分子鏈圖解說各種膠體：分子長什麼樣、為什麼會（或不會）凝膠、兩種膠體混用時發生什麼事，以及最後吃起來是什麼口感。
+An interactive visualization tool for food R&D that explains hydrocolloid molecular structure, gelation mechanisms, synergistic interactions and resulting texture, using friendly but chemically faithful chain cartoons.
 
-🔬 核心功能 | Key Features
-分子結構可視化 (Molecular Visualization): 包含 KGM, Kappa/Iota Carrageenan, Gellan Gum, Pectin 等 12 種膠體的 Haworth 投影結構。
+## 🔬 核心功能 | Key Features
 
-交聯機制展示 (Crosslinking Mechanisms): 動態展示 Egg-Box Model (蛋盒模型)、Synergistic Interpenetrating Networks (協同穿插網絡) 等底層科學機制。
+- **可愛分子鏈圖（Chain Cartoons）**：一顆珠子代表一個糖（或胺基酸），顏色代表糖的種類；取代基（乙醯基 Ac、甲酯 Me、硫酸根 SO₃⁻、丙酮酸 Pyr）用小標籤表示；離子（K⁺、Ca²⁺）用發光小球表示。
+- **「跟真實分子差在哪？」說明**：每張分子圖都列出哪些地方是照文獻比例畫的（✔），哪些地方為了好理解而簡化（✖），例如鏈長、立體螺旋、取代基分布。
+- **協同機制圖解**：用「骨架 + 平滑段貼附」的概念，解釋為什麼 LBG、KGM 能和 κ-鹿角菜膠、三仙膠協同，而瓜爾膠、ι-鹿角菜膠的協同效果很弱。
+- **巨觀口感卡（Macro Result）**：動畫形狀、生活中的食物比喻、「湯匙壓下去」會怎樣，加上硬度、彈性、脆度、透明、耐熱五項相對評分。
+- **口感質地光譜**：從會流動的液體到一壓就碎的硬凝膠，把所有系統放在同一條光譜上比較。
+- **文獻依據**：每個系統都附上可查證的關鍵文獻（例如 Grant et al. 1973、Dea et al. 1977、Morris et al. 2012、Goycoolea et al. 1995）。
 
-口感光譜 (Texture Spectrum): 將複雜的流變學數據轉化為直觀的口感光譜，涵蓋從「入口即化」到「堅硬脆性」的完整區間。
+## 🧪 分區概覽 | Zones
 
-科學文獻引用 (Literature Grounding): 每個系統均附帶關鍵科學文獻支撐（如 Mao R. et al., Grant G.T. et al.）。
+| 分區 | 內容 |
+|---|---|
+| **Zone 0 分子鏈長什麼樣** | 13 種膠體的分子鏈圖、化學數據與文獻：KGM 蒟蒻膠、κ-鹿角菜膠、ι-鹿角菜膠、LBG 刺槐豆膠、瓜爾膠、三仙膠、CMC、HA 結蘭膠、LA 結蘭膠、HM 果膠、LM 果膠、阿拉伯膠、動物明膠 |
+| **Zone 1 協同凝膠** | KGM + κ、κ + LBG、**果凍（κ + KGM + LBG）**、**豆花（ι + LBG，協同很弱並附說明）**、三仙膠 + LBG、三仙膠 + KGM、三仙膠 + 瓜爾膠（只有黏度協同） |
+| **Zone 2 單一膠體凝膠** | HA 結蘭膠、LA 結蘭膠 + Ca²⁺、HM 果膠（酸 + 高糖）、LM 果膠 + Ca²⁺（蛋盒模型） |
+| **Zone 3 增稠與乳化（不凝膠）** | CMC（增稠）、阿拉伯膠（乳化），並說明「CMC + 阿拉伯膠」為何不算協同 |
+| **Zone 4 動物明膠對照** | 240 / 160 Bloom 明膠的三股螺旋交聯與入口即化特性 |
 
-🧪 展示 Zone 概覽 | System Overview
-Zone 0: 12 種膠體的化學結構與分子量數據。
+## 📝 2026-11 修訂重點 | Revision Notes
 
-Zone 1: KGM 與 κ-鹿角菜膠的協同增效矩陣。
+- 修正多項化學數據：KGM 分支與乙醯基頻率、κ-鹿角菜膠硫酸根含量、HA 結蘭膠醯基數量（原本寫反）、結蘭膠與 CMC 分子量、LBG 分子量、明膠螺旋方向與融點
+- 刪除查無文獻依據的描述（例如「KGM 以 40–50° 斜角嵌入 κ 螺旋」、「KGM + κ 耐熱 > 80°C」）
+- ι + LBG 改標為「協同很弱 / 幾乎沒有」並附文獻；CMC + 阿拉伯膠改為「分工，不是協同」
+- 原 Zone 3（內容重複、分類混雜）與原 Zone 5 整併；三重協同改為 Zone 1 的「果凍」系統
+- 新增瓜爾膠，以及 κ + LBG、三仙膠 + LBG / KGM / 瓜爾膠、LM 果膠 + Ca²⁺ 等系統
+- 完整修訂清單可在網頁底部「本次修訂內容」展開查看
 
-Zone 2: 結蘭膠 (Gellan Gum) 的醯基位阻與離子互動。
+## ⚠️ 使用說明 | Notes
 
-Zone 3: 果膠 (Pectin) 的疏水結合與增稠流體系統。
+- 分子圖是教學示意圖：會保留糖的種類、比例、取代基與連結位置；鏈長、立體螺旋和分子大小則經過簡化。
+- 口感評分是相對比較，實際結果會隨濃度、離子、糖量與加工條件改變；配方比例請以實驗為準。
 
-Zone 4: 動物明膠 (Gelatin) 三重螺旋網絡與植物膠之對照。
+## 🛠️ 技術 | Technology Stack
 
-Zone 5: KGM + Kappa + LBG 的三重協同超強網絡。
+- React 18（UI）
+- SVG（程式繪製的分子鏈與協同示意圖）
+- Babel Standalone（瀏覽器端編譯 JSX）
+- CSS Animations（口感動畫）
 
-🛠️ 技術棧 | Technology Stack
-React 18 (UI 邏輯)
-
-SVG (精確分子結構繪製)
-
-Babel Standalone (瀏覽器端解析)
-
-CSS Animations (質地物理感模擬)
+開啟方式：直接用瀏覽器打開 `index.html`，或使用 GitHub Pages。`植物膠體結構展示系統.html` 與 `index.html` 內容相同（保留舊檔名，舊連結仍可用）。
